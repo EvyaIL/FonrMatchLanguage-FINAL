@@ -34,7 +34,7 @@ const navigationHTML = `
                     <span class="en">Dashboard</span>
                     <span class="he">לוח בקרה</span>
                 </a>
-                <a href="dashboard.html?tab=favorites" class="dropdown-item">
+                <a href="dashboard.html?tab=font-matches" class="dropdown-item">
                     <i class="fas fa-heart"></i>
                     <span class="en">My Favorites</span>
                     <span class="he">המועדפים שלי</span>

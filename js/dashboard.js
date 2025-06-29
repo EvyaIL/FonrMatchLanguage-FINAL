@@ -11,6 +11,8 @@ document.addEventListener('DOMContentLoaded', () => {
             populateUserData(currentUser);
             // Once user is available, we can fetch their data
             fetchAndDisplayFontMatches(); 
+            // Initialize dashboard stats
+            loadDashboardStats();
         } else {
             // Handle logged out state, maybe show a message or redirect
             console.log("User is not logged in. Dashboard cannot be displayed.");
@@ -64,19 +66,32 @@ function setupDashboardUI() {
     if (!defaultTab) {
         document.getElementById('overview').classList.add('active');
     }
+
+    // Handle URL parameters for direct tab navigation
+    const urlParams = new URLSearchParams(window.location.search);
+    const initialTab = urlParams.get('tab');
+    if (initialTab) {
+        // Wait for DOM to be ready, then switch to the specified tab
+        setTimeout(() => {
+            const tabButton = document.querySelector(`[data-tab="${initialTab}"]`);
+            if (tabButton) {
+                tabButton.click();
+            }
+        }, 100);
+    }
 }
 
 function loadTabContent(tabId) {
     switch (tabId) {
         case 'overview':
             // Fetched when auth state is known
-            fetchAndDisplayFontMatches('/api/font-matches', document.getElementById('overview'));
+            fetchAndDisplayFontMatches('/api/v1/fontmatches', document.getElementById('recent-activity-list'));
             break;
-        case 'favorites':
-            fetchAndDisplayFontMatches('/api/font-matches/favorites', document.getElementById('favorites'), "You have no favorite font matches.");
+        case 'font-matches':
+            fetchAndDisplayFontMatches('/api/v1/fontmatches/favorites', document.getElementById('favorite-pairs-list'), "You have no favorite font matches.");
             break;
         case 'history':
-            fetchAndDisplayFontMatches('/api/font-matches/history', document.getElementById('history'), "You have no font match history.");
+            fetchAndDisplayFontMatches('/api/v1/fontmatches', document.getElementById('search-history-list'), "You have no font match history.");
             break;
         case 'settings':
             renderSettingsTab();
@@ -158,7 +173,9 @@ async function fetchAndDisplayFontMatches(apiUrl, containerElement, emptyMessage
     }
 }
 
-function displayFontMatches(matches, containerElement, emptyMessage) {
+function displayFontMatches(response, containerElement, emptyMessage) {
+    const matches = response.data || [];
+    
     if (!matches || matches.length === 0) {
         containerElement.innerHTML = `<p>${emptyMessage}</p>`;
         return;
@@ -169,17 +186,30 @@ function displayFontMatches(matches, containerElement, emptyMessage) {
 
     matches.forEach(match => {
         const item = document.createElement('li');
-        const date = new Date(match.createdAt).toLocaleDateString(currentLanguage, {
+        const date = new Date(match.createdAt).toLocaleDateString(currentLanguage === 'he' ? 'he-IL' : 'en-US', {
             year: 'numeric', month: 'long', day: 'numeric'
         });
 
         item.innerHTML = `
             <div class="match-info">
                 <span class="match-date">${date}</span>
-                <span class="match-font">${match.font1} & ${match.font2}</span>
+                <span class="match-fonts">${match.sourceFont} → ${match.targetFont}</span>
+                <span class="match-languages">${match.sourceLanguage.toUpperCase()} → ${match.targetLanguage.toUpperCase()}</span>
+                <span class="match-score">Match: ${match.matchScore || 85}%</span>
+            </div>
+            <div class="match-preview">
+                <div class="source-preview" style="font-family: '${match.sourceFont}'">${match.sourceText || 'Sample text'}</div>
+                <div class="target-preview" style="font-family: '${match.targetFont}'">${match.targetText || 'Sample text'}</div>
             </div>
             <div class="match-actions">
-                 <button class="btn-favorite ${match.isFavorite ? 'active' : ''}" data-match-id="${match.id}">${match.isFavorite ? 'Favorited' : 'Favorite'}</button>
+                <button class="btn-favorite ${match.isFavorite ? 'active' : ''}" data-match-id="${match._id}">
+                    <i class="fas fa-heart"></i>
+                    ${match.isFavorite ? 'Favorited' : 'Favorite'}
+                </button>
+                <button class="btn-delete" data-match-id="${match._id}">
+                    <i class="fas fa-trash"></i>
+                    Delete
+                </button>
             </div>
         `;
         list.appendChild(item);
@@ -192,36 +222,101 @@ function displayFontMatches(matches, containerElement, emptyMessage) {
     containerElement.querySelectorAll('.btn-favorite').forEach(button => {
         button.addEventListener('click', handleFavoriteClick);
     });
+    
+    // Add event listeners for delete buttons
+    containerElement.querySelectorAll('.btn-delete').forEach(button => {
+        button.addEventListener('click', handleDeleteClick);
+    });
 }
 
 async function handleFavoriteClick(event) {
-    const button = event.target;
+    const button = event.target.closest('.btn-favorite');
     const matchId = button.dataset.matchId;
     const isFavorited = button.classList.contains('active');
 
     try {
-        const response = await fetch(`/api/font-matches/${matchId}/favorite`, {
-            method: 'POST',
+        const response = await fetch(`/api/v1/fontmatches/${matchId}/favorite`, {
+            method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            },
-            body: JSON.stringify({ favorite: !isFavorited })
+            }
         });
 
         if (!response.ok) {
             throw new Error('Failed to update favorite status');
         }
 
-        const updatedMatch = await response.json();
+        const result = await response.json();
+        const updatedMatch = result.data;
 
         // Update button state
         button.classList.toggle('active');
-        button.textContent = updatedMatch.isFavorite ? 'Favorited' : 'Favorite';
+        button.innerHTML = `
+            <i class="fas fa-heart"></i>
+            ${updatedMatch.isFavorite ? 'Favorited' : 'Favorite'}
+        `;
+
+        // Update favorites count in overview if visible
+        updateFavoritesCount();
 
     } catch (error) {
         console.error('Error updating favorite status:', error);
         alert('Could not update favorite status. Please try again.');
+    }
+}
+
+async function handleDeleteClick(event) {
+    const button = event.target.closest('.btn-delete');
+    const matchId = button.dataset.matchId;
+    
+    if (!confirm('Are you sure you want to delete this font match?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/v1/fontmatches/${matchId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to delete font match');
+        }
+
+        // Remove the item from the list
+        const listItem = button.closest('li');
+        listItem.remove();
+        
+        // Update counts
+        updateFavoritesCount();
+
+    } catch (error) {
+        console.error('Error deleting font match:', error);
+        alert('Could not delete font match. Please try again.');
+    }
+}
+
+async function updateFavoritesCount() {
+    try {
+        const response = await fetch('/api/v1/fontmatches/favorites', {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            }
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            const count = result.count || 0;
+            const favoritesCountEl = document.getElementById('stats-favorites');
+            if (favoritesCountEl) {
+                favoritesCountEl.textContent = count;
+            }
+        }
+    } catch (error) {
+        console.error('Error updating favorites count:', error);
     }
 }
 
@@ -276,5 +371,46 @@ async function handleDeleteAccount() {
     } catch (error) {
         console.error('Error deleting account:', error);
         alert(`Error: ${error.message}`);
+    }
+}
+
+// --- DASHBOARD STATS --- //
+
+async function loadDashboardStats() {
+    try {
+        // Load favorites count
+        const favoritesResponse = await fetch('/api/v1/fontmatches/favorites', {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            }
+        });
+        
+        if (favoritesResponse.ok) {
+            const favoritesResult = await favoritesResponse.json();
+            const favoritesCount = favoritesResult.count || 0;
+            const favoritesEl = document.getElementById('stats-favorites');
+            if (favoritesEl) {
+                favoritesEl.textContent = favoritesCount;
+            }
+        }
+        
+        // Load total searches count
+        const allMatchesResponse = await fetch('/api/v1/fontmatches', {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            }
+        });
+        
+        if (allMatchesResponse.ok) {
+            const allMatchesResult = await allMatchesResponse.json();
+            const totalCount = allMatchesResult.count || 0;
+            const searchesEl = document.getElementById('stats-searches');
+            if (searchesEl) {
+                searchesEl.textContent = totalCount;
+            }
+        }
+        
+    } catch (error) {
+        console.error('Error loading dashboard stats:', error);
     }
 }
