@@ -127,9 +127,11 @@
                             <option value="en">English</option>
                             <option value="he">עברית</option>
                         </select>
-                        <select id="source-font">
-                            <!-- Fonts will be populated by JavaScript -->
-                        </select>
+                        <!-- Searchable font input -->
+                        <input type="text" id="source-font-input" list="source-font-list" placeholder="Search fonts..." autocomplete="off" />
+                        <datalist id="source-font-list">
+                            <!-- populated dynamically -->
+                        </datalist>
                     </div>
                     <textarea id="source-text" placeholder="Enter text here"></textarea>
                 </div>

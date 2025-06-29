@@ -345,10 +345,7 @@ class FontManager {
         });
         
         this.preloadFonts();
-        // Load additional fonts from manifest (e.g., local Hebrew fonts)
-        if (window.fetch) {
-            this.loadCustomFonts();
-        }
+        // Custom fonts will be loaded explicitly after DOM is ready
     }
 
     // Fetch custom font manifest and register fonts dynamically

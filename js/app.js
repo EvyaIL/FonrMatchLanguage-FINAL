@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     // Initialize managers - check if they exist globally first
     const fontManager = window.fontManager || new FontManager();
     const uiManager = window.uiManager || new UIManager();
@@ -16,7 +16,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const heBtn = document.getElementById('he-btn');
     const sourceLanguage = document.getElementById('source-language');
     const targetLanguage = document.getElementById('target-language');
-    const sourceFont = document.getElementById('source-font');
+    const sourceFontInput = document.getElementById('source-font-input');
+    const sourceFontList = document.getElementById('source-font-list');
     const sourceText = document.getElementById('source-text');
     const outputText = document.getElementById('output-text');
     const matchButton = document.getElementById('match-button');
@@ -30,12 +31,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const fontComparisonDisplay = document.getElementById('font-comparison-display');
     
     // Check for missing critical elements
-    if (!sourceLanguage || !targetLanguage || !sourceFont || !sourceText || !matchButton) {
+    if (!sourceLanguage || !targetLanguage || !sourceFontInput || !sourceFontList || !sourceText || !matchButton) {
         console.error('Critical DOM elements missing for font matching');
         return;
     }
     
     // Initialize the page
+    // Load custom fonts first, then initialize
+    if (fontManager.loadCustomFonts) {
+        await fontManager.loadCustomFonts();
+    }
     init();
 
     function init() {
@@ -49,7 +54,7 @@ document.addEventListener('DOMContentLoaded', function() {
             themeSwitch.checked = true;
         }
         
-        // Populate font dropdown
+        // Populate font dropdown with all loaded fonts
         updateFontOptions();
         
         // Set event listeners
@@ -129,8 +134,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         // Font selection preview
-        if (sourceFont) {
-            sourceFont.addEventListener('change', function() {
+        if (sourceFontInput) {
+            sourceFontInput.addEventListener('input', function() {
                 previewFont(this.value, sourceText);
             });
         }
@@ -182,30 +187,23 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function updateFontOptions() {
-        // Load all fonts (both English and Hebrew) into the selector
+        // Load all fonts into the datalist
         const allFonts = [...fontManager.englishFonts, ...fontManager.hebrewFonts];
-
-        // Clear existing options
-        sourceFont.innerHTML = '';
-
-        // Add font options for all loaded fonts
-        const fonts = allFonts;
-        // Remove duplicate names
+        // Clear existing datalist options
+        sourceFontList.innerHTML = '';
         const seen = new Set();
-        fonts.forEach(font => {
+        allFonts.forEach(font => {
             if (seen.has(font.name)) return;
             seen.add(font.name);
-             const option = document.createElement('option');
-             option.value = font.name;
-             option.textContent = font.name;
-             option.style.fontFamily = font.name;
-             sourceFont.appendChild(option);
-         });
-
-        // Set initial preview with first font
-        if (seen.size > 0) {
-            const firstFont = Array.from(seen)[0];
-            previewFont(firstFont, sourceText);
+            const option = document.createElement('option');
+            option.value = font.name;
+            sourceFontList.appendChild(option);
+        });
+        // Set initial input value and preview
+        const first = seen.values().next().value;
+        if (first) {
+            sourceFontInput.value = first;
+            previewFont(first, sourceText);
         }
     }
 
@@ -237,7 +235,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function findMatchingFont() {
         const sourceLang = sourceLanguage.value;
         const targetLang = targetLanguage.value;
-        const selectedFont = sourceFont.value;
+        const selectedFont = sourceFontInput.value;
         const inputText = sourceText.value || getDefaultText(sourceLang);
         const targetInputText = targetText.value || getDefaultText(targetLang);
         
@@ -501,10 +499,4 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         return element;
     }
-    
-    // Re-populate font options if new fonts are loaded
-    document.addEventListener('fonts-loaded', () => {
-        updateFontOptions();
-        console.log('Font options updated after loading custom fonts.');
-    });
 });

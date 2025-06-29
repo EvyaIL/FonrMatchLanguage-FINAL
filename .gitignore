@@ -40,4 +40,8 @@ yarn-error.log*
 .vercel
 
 
-/public/fonts
+/public/fonts/**/*.woff
+/public/fonts/**/*.woff2
+/public/fonts/**/*.ttf
+/public/fonts/**/*.otf
+!/public/fonts/fonts.json
