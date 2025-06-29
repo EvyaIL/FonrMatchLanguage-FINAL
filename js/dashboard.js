@@ -56,8 +56,8 @@ function setupDashboardUI() {
                 }
             });
 
-            // Load content for the tab if needed (optional)
-            // loadTabContent(tabId);
+            // Load content for the tab
+            loadTabContent(tabId);
         });
     });
 
@@ -82,16 +82,30 @@ function setupDashboardUI() {
 }
 
 function loadTabContent(tabId) {
+    console.log('Loading tab content for:', tabId);
+    
     switch (tabId) {
         case 'overview':
             // Fetched when auth state is known
-            fetchAndDisplayFontMatches('/api/v1/fontmatches', document.getElementById('recent-activity-list'));
+            const recentActivityEl = document.getElementById('recent-activity-list');
+            console.log('Recent activity element:', recentActivityEl);
+            if (recentActivityEl) {
+                fetchAndDisplayFontMatches('/api/v1/fontmatches', recentActivityEl);
+            }
             break;
         case 'font-matches':
-            fetchAndDisplayFontMatches('/api/v1/fontmatches/favorites', document.getElementById('favorite-pairs-list'), "You have no favorite font matches.");
+            const favoritesEl = document.getElementById('favorite-pairs-list');
+            console.log('Favorites element:', favoritesEl);
+            if (favoritesEl) {
+                fetchAndDisplayFontMatches('/api/v1/fontmatches/favorites', favoritesEl, "You have no favorite font matches.");
+            }
             break;
         case 'history':
-            fetchAndDisplayFontMatches('/api/v1/fontmatches', document.getElementById('search-history-list'), "You have no font match history.");
+            const historyEl = document.getElementById('search-history-list');
+            console.log('History element:', historyEl);
+            if (historyEl) {
+                fetchAndDisplayFontMatches('/api/v1/fontmatches', historyEl, "You have no font match history.");
+            }
             break;
         case 'settings':
             renderSettingsTab();
@@ -152,9 +166,20 @@ function populateUserData(user) {
 }
 
 async function fetchAndDisplayFontMatches(apiUrl, containerElement, emptyMessage = "You have no recent font matches.") {
-    if (!currentUser) return;
+    if (!currentUser) {
+        console.log('No current user, cannot fetch font matches');
+        return;
+    }
 
-    containerElement.innerHTML = '<div class="loader"></div>'; // Show loader
+    console.log('Fetching font matches from:', apiUrl);
+    console.log('Container element:', containerElement);
+    
+    if (!containerElement) {
+        console.error('Container element not found');
+        return;
+    }
+
+    containerElement.innerHTML = '<div class="loader">Loading...</div>'; // Show loader
 
     try {
         const response = await fetch(apiUrl, {
@@ -162,11 +187,17 @@ async function fetchAndDisplayFontMatches(apiUrl, containerElement, emptyMessage
                 'Authorization': `Bearer ${localStorage.getItem('token')}`,
             }
         });
+        
+        console.log('Response status:', response.status);
+        
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        const matches = await response.json();
-        displayFontMatches(matches, containerElement, emptyMessage);
+        
+        const result = await response.json();
+        console.log('Fetched data:', result);
+        
+        displayFontMatches(result, containerElement, emptyMessage);
     } catch (error) {
         console.error(`Could not fetch font matches from ${apiUrl}:`, error);
         containerElement.innerHTML = `<p>Could not load your font matches. Please try again later.</p>`;
@@ -174,9 +205,15 @@ async function fetchAndDisplayFontMatches(apiUrl, containerElement, emptyMessage
 }
 
 function displayFontMatches(response, containerElement, emptyMessage) {
+    console.log('Displaying font matches:', response);
+    
     const matches = response.data || [];
     
+    console.log('Matches array:', matches);
+    console.log('Matches count:', matches.length);
+    
     if (!matches || matches.length === 0) {
+        console.log('No matches found, showing empty message');
         containerElement.innerHTML = `<p>${emptyMessage}</p>`;
         return;
     }
@@ -185,6 +222,8 @@ function displayFontMatches(response, containerElement, emptyMessage) {
     list.className = 'font-match-list';
 
     matches.forEach(match => {
+        console.log('Processing match:', match);
+        
         const item = document.createElement('li');
         const date = new Date(match.createdAt).toLocaleDateString(currentLanguage === 'he' ? 'he-IL' : 'en-US', {
             year: 'numeric', month: 'long', day: 'numeric'
@@ -227,6 +266,8 @@ function displayFontMatches(response, containerElement, emptyMessage) {
     containerElement.querySelectorAll('.btn-delete').forEach(button => {
         button.addEventListener('click', handleDeleteClick);
     });
+    
+    console.log('Font matches displayed successfully');
 }
 
 async function handleFavoriteClick(event) {
