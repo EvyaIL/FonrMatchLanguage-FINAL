@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Find matching fonts between Hebrew and English using AI technology. Create harmonious typography for multilingual designs.">
+    <title>Font Match | Match fonts between languages</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts with enhanced selection -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Heebo:wght@300;400;500;700&family=Open+Sans:wght@300;400;600&family=Rubik:wght@300;400;500;600&family=Assistant:wght@300;400;600&family=Frank+Ruhl+Libre:wght@300;400;500;700&family=Montserrat:wght@300;400;500;600&family=Playfair+Display:wght@400;500;600&family=Merriweather:wght@300;400;700&family=Noto+Sans+Hebrew:wght@300;400;500;700&family=Noto+Serif+Hebrew:wght@300;400;600;700&family=David+Libre:wght@400;500;700&family=Arimo:wght@400;500;600;700&family=Secular+One&family=Suez+One&display=swap" rel="stylesheet">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+</head>
+<body class="light-mode">
+    <header>
+        <div class="container">
+            <a href="index.html" class="logo">
+                <div class="logo-icon"><i class="fas fa-font"></i></div>
+                <span class="en">Font Match</span>
+                <span class="he">התאמת גופנים</span>
+            </a>
+            <nav>
+                <div class="nav-links">
+                    <a href="about-us.html" class="nav-link">
+                        <span class="en">About</span>
+                        <span class="he">אודות</span>
+                    </a>
+                    <a href="#font-showcase" class="nav-link">
+                        <span class="en">Fonts</span>
+                        <span class="he">גופנים</span>
+                    </a>
+                    <a href="contact-us.html" class="nav-link">
+                        <span class="en">Contact</span>
+                        <span class="he">צור קשר</span>
+                    </a>
+                </div>
+                
+                <!-- Auth Buttons (shown when logged out) -->
+                <div id="auth-buttons" class="auth-nav-buttons">
+                    <a href="login.html" class="btn btn-primary btn-sm">
+                        <span class="en">Login / Register</span>
+                        <span class="he">כניסה / הרשמה</span>
+                    </a>
+                </div>
+                
+                <!-- User Menu (shown when logged in) -->
+                <div id="user-menu" class="user-menu" style="display: none;">
+                    <div class="user-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <span id="username" class="username">User</span>
+                    <i class="fas fa-chevron-down"></i>
+                    
+                    <div class="dropdown-menu">
+                        <a href="dashboard.html" class="dropdown-item">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <span class="en">Dashboard</span>
+                            <span class="he">לוח בקרה</span>
+                        </a>
+                        <a href="dashboard.html?tab=favorites" class="dropdown-item">
+                            <i class="fas fa-heart"></i>
+                            <span class="en">My Favorites</span>
+                            <span class="he">המועדפים שלי</span>
+                        </a>
+                        <a href="dashboard.html?tab=history" class="dropdown-item">
+                            <i class="fas fa-history"></i>
+                            <span class="en">Search History</span>
+                            <span class="he">היסטורית חיפוש</span>
+                        </a>
+                        <a href="#" id="logout-btn" class="dropdown-item">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span class="en">Logout</span>
+                            <span class="he">התנתק</span>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="language-toggle">
+                    <button id="en-btn" class="active">EN</button>
+                    <button id="he-btn">עב</button>
+                </div>
+                <div class="theme-toggle">
+                    <input type="checkbox" id="theme-switch">
+                    <label for="theme-switch">
+                        <i class="fas fa-sun"></i>
+                        <i class="fas fa-moon"></i>
+                    </label>
+                </div>
+                <button id="about-button" class="about-btn" data-tooltip="About Font Match">
+                    <i class="fas fa-info-circle"></i>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+            <div class="hero-section animate-on-scroll">
+                <div class="hero-content">
+                    <h1 class="en">Font Match Language</h1>
+                    <h1 class="he">התאמת גופנים בין שפות</h1>
+                    <p class="en">Find matching fonts between Hebrew and English using AI for perfect multilingual typography</p>
+                    <p class="he">מצא גופנים תואמים בין עברית ואנגלית באמצעות בינה מלאכותית לטיפוגרפיה רב־לשונית מושלמת</p>
+                    <div class="hero-cta">
+                        <a href="#translator" class="btn btn-primary">
+                            <span class="en">Start Matching</span>
+                            <span class="he">התחל להתאים</span>
+                            <i class="fas fa-arrow-right"></i>
+                        </a>
+                        <a href="#font-showcase" class="btn btn-secondary">
+                            <span class="en">Explore Fonts</span>
+                            <span class="he">גלה גופנים</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div id="translator" class="translator animate-on-scroll">
+                <div class="input-container">
+                    <div class="language-selector">
+                        <select id="source-language">
+                            <option value="en">English</option>
+                            <option value="he">עברית</option>
+                        </select>
+                        <select id="source-font">
+                            <!-- Fonts will be populated by JavaScript -->
+                        </select>
+                    </div>
+                    <textarea id="source-text" placeholder="Enter text here"></textarea>
+                </div>
+
+                <div class="controls">
+                    <button id="swap-languages" data-tooltip="Swap Languages">
+                        <i class="fas fa-exchange-alt"></i>
+                    </button>
+                </div>
+
+                <div class="output-container">
+                    <div class="language-selector">
+                        <select id="target-language" disabled>
+                            <option value="he">עברית</option>
+                            <option value="en">English</option>
+                        </select>
+                        <div id="matched-font">
+                            <span class="en">Matched font:</span>
+                            <span class="he">גופן תואם:</span>
+                            <span id="font-name">--</span>
+                        </div>
+                    </div>
+                    <textarea id="target-text" placeholder="Enter text in the other language"></textarea>
+                </div>
+            </div>
+
+            <div class="actions animate-on-scroll">
+                <button id="match-button">
+                    <i class="fas fa-magic"></i>
+                    <span class="en">Find Matching Font</span>
+                    <span class="he">חפש גופן תואם</span>
+                </button>
+            </div>
+            
+            <!-- Font comparison display -->
+            <div id="font-comparison-display" class="font-comparison-display"></div>
+            
+            <!-- How it works section -->
+            <div class="font-comparison animate-on-scroll">
+                <h2 class="en">How it works</h2>
+                <h2 class="he">איך זה עובד</h2>
+                <div class="comparison-content">
+                    <div class="comparison-step">
+                        <div class="step-number">1</div>
+                        <h3 class="en">Choose a font</h3>
+                        <h3 class="he">בחר גופן</h3>
+                        <p class="en">Select your source language and font from our extensive collection</p>
+                        <p class="he">בחר את שפת המקור והגופן מהאוסף הנרחב שלנו</p>
+                    </div>
+                    <div class="comparison-step">
+                        <div class="step-number">2</div>
+                        <h3 class="en">Enter text</h3>
+                        <h3 class="he">הכנס טקסט</h3>
+                        <p class="en">Type or paste your text in both languages to see how they look</p>
+                        <p class="he">הקלד או הדבק את הטקסט שלך בשתי השפות כדי לראות כיצד הם נראים</p>
+                    </div>
+                    <div class="comparison-step">
+                        <div class="step-number">3</div>
+                        <h3 class="en">Find matches</h3>
+                        <h3 class="he">מצא התאמות</h3>
+                        <p class="en">Our AI analyzes typographic features to find visually harmonious matches</p>
+                        <p class="he">הבינה המלאכותית שלנו מנתחת מאפיינים טיפוגרפיים כדי למצוא התאמות הרמוניות חזותית</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Font showcase section -->
+            <section id="font-showcase" class="font-showcase">
+                <div class="container">
+                    <h2 class="section-title en">Font Showcase</h2>
+                    <h2 class="section-title he">תצוגת גופנים</h2>
+                    <p class="section-description en">Explore our extensive collection of fonts in both languages</p>
+                    <p class="section-description he">גלה את אוסף הגופנים הנרחב שלנו בשתי השפות</p>
+                    
+                    <div class="language-tabs">
+                        <button id="showcase-en-tab" class="tab active" data-lang="en">English</button>
+                        <button id="showcase-he-tab" class="tab" data-lang="he">עברית</button>
+                    </div>
+                    
+                    <div id="font-samples-container" class="font-samples-container">
+                        <!-- Font samples will be populated by JavaScript -->
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <a href="index.html" class="logo">
+                        <div class="logo-icon"><i class="fas fa-font"></i></div>
+                        <span class="en">Font Match</span>
+                        <span class="he">התאמת גופנים</span>
+                    </a>
+                </div>
+                
+                <div class="footer-social">
+                    <a href="#" class="social-icon" aria-label="Facebook">
+                        <i class="fab fa-facebook-f"></i>
+                    </a>
+                    <a href="#" class="social-icon" aria-label="Twitter">
+                        <i class="fab fa-twitter"></i>
+                    </a>
+                    <a href="#" class="social-icon" aria-label="Instagram">
+                        <i class="fab fa-instagram"></i>
+                    </a>
+                    <a href="#" class="social-icon" aria-label="LinkedIn">
+                        <i class="fab fa-linkedin-in"></i>
+                    </a>
+                </div>
+                
+                <div class="footer-links">
+                    <a href="privacy-policy.html" class="en">Privacy Policy</a>
+                    <a href="privacy-policy.html" class="he">מדיניות פרטיות</a>
+                    <a href="terms-of-service.html" class="en">Terms of Service</a>
+                    <a href="terms-of-service.html" class="he">תנאי שימוש</a>
+                    <a href="contact-us.html" class="en">Contact Us</a>
+                    <a href="contact-us.html" class="he">צור קשר</a>
+                    <a href="about-us.html" class="en">About Us</a>
+                    <a href="about-us.html" class="he">אודות</a>
+                </div>
+                <p class="footer-copyright en">© 2023 Font Match Language. All rights reserved.</p>
+                <p class="footer-copyright he">© 2023 התאמת גופנים. כל הזכויות שמורות.</p>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- Loading overlay -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="spinner"></div>
+        <p class="en">Finding the perfect match...</p>
+        <p class="he">מוצא את ההתאמה המושלמת...</p>
+    </div>
+    
+    <!-- About modal -->
+    <div id="about-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="en">About Font Match</h2>
+                <h2 class="he">אודות התאמת גופנים</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="en">
+                    <p>Font Match is an AI-powered tool that helps designers, translators, and multilingual content creators find matching fonts between Hebrew and English.</p>
+                    <p>Our technology analyzes font characteristics such as weight, proportion, x-height, and stylistic elements to find the most visually harmonious matches across languages.</p>
+                    <h3>How to use Font Match:</h3>
+                    <ol>
+                        <li>Select your source language and font</li>
+                        <li>Enter or paste your text in both languages</li>
+                        <li>Click "Find Matching Font"</li>
+                        <li>See the AI-matched font pairing with comparison</li>
+                    </ol>
+                    <p>Font Match is continuously learning and improving its matches through machine learning algorithms trained on professional typographic pairings.</p>
+                </div>
+                <div class="he">
+                    <p>התאמת גופנים הוא כלי מבוסס בינה מלאכותית המסייע למעצבים, מתרגמים ויוצרי תוכן רב-לשוני למצוא גופנים תואמים בין עברית ואנגלית.</p>
+                    <p>הטכנולוגיה שלנו מנתחת מאפייני גופן כגון משקל, פרופורציה, גובה x ואלמנטים סגנוניים כדי למצוא את ההתאמות החזותיות ההרמוניות ביותר בין שפות.</p>
+                    <h3>כיצד להשתמש בהתאמת גופנים:</h3>
+                    <ol>
+                        <li>בחר את שפת המקור והגופן שלך</li>
+                        <li>הזן או הדבק את הטקסט שלך בשתי השפות</li>
+                        <li>לחץ על "חפש גופן תואם"</li>
+                        <li>ראה את זוג הגופנים המותאמים בינה מלאכותית עם השוואה</li>
+                    </ol>
+                    <p>התאמת גופנים לומדת ומשפרת באופן מתמיד את ההתאמות שלה באמצעות אלגוריתמים של למידת מכונה שאומנו על צימודי טיפוגרפיה מקצועיים.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Templates -->
+    <template id="font-pair-template">
+        <div class="font-pair">
+            <div class="source-font">
+                <h3 class="font-name"></h3>
+                <div class="font-preview"></div>
+            </div>
+            <div class="match-indicator">
+                <i class="fas fa-arrows-alt-h"></i>
+                <div class="match-percentage"></div>
+            </div>
+            <div class="target-font">
+                <h3 class="font-name"></h3>
+                <div class="font-preview"></div>
+            </div>
+        </div>
+    </template>
+
+    <script src="js/fonts.js"></script>
+    <script src="js/translation.js"></script>
+    <script src="js/mock-server.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/auth-debug.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check authentication state and update UI
+            function updateAuthUI() {
+                const authButtons = document.getElementById('auth-buttons');
+                const userMenu = document.getElementById('user-menu');
+                const username = document.getElementById('username');
+                
+                if (authManager && authManager.isAuthenticated()) {
+                    // User is logged in
+                    authButtons.style.display = 'none';
+                    userMenu.style.display = 'flex';
+                    
+                    // Update username if available
+                    const user = authManager.getCurrentUser();
+                    if (user && user.username) {
+                        username.textContent = user.username;
+                    }
+                } else {
+                    // User is not logged in
+                    authButtons.style.display = 'flex';
+                    userMenu.style.display = 'none';
+                }
+            }
+            
+            // Initial UI update
+            updateAuthUI();
+            
+            // Listen for auth state changes
+            document.addEventListener('auth-state-changed', updateAuthUI);
+            
+            // Original language handling code
+            const body = document.body;
+            
+            function setLanguage(lang) {
+                // ...existing code...
+            }
+            
+            // ...existing code...
+        });
+    </script>
+</body>
+</html>

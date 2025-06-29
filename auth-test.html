@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authentication Test | Font Match</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .test-container {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+        }
+        .test-card {
+            border: 1px solid var(--border-color);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 5px;
+        }
+        .test-group {
+            margin-bottom: 2rem;
+        }
+        .test-heading {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+        .test-result {
+            font-family: monospace;
+            background: #2d2d2d;
+            color: #fff;
+            padding: 0.75rem;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 0.5rem 0;
+        }
+        .test-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin: 1rem 0;
+        }
+        .success {
+            color: #2ecc71;
+        }
+        .warning {
+            color: #f39c12;
+        }
+        .error {
+            color: #e74c3c;
+        }
+    </style>
+</head>
+<body class="light-mode">
+    <header>
+        <div class="container">
+            <a href="index.html" class="logo">
+                <div class="logo-icon"><i class="fas fa-font"></i></div>
+                <span class="en">Font Match</span>
+                <span class="he">התאמת גופנים</span>
+            </a>
+            <nav>
+                <div class="nav-links">
+                    <a href="about-us.html" class="nav-link">
+                        <span class="en">About</span>
+                        <span class="he">אודות</span>
+                    </a>
+                    <a href="index.html#font-showcase" class="nav-link">
+                        <span class="en">Fonts</span>
+                        <span class="he">גופנים</span>
+                    </a>
+                    <a href="contact-us.html" class="nav-link">
+                        <span class="en">Contact</span>
+                        <span class="he">צור קשר</span>
+                    </a>
+                </div>
+                
+                <!-- Auth Buttons (shown when logged out) -->
+                <div id="auth-buttons" class="auth-nav-buttons">
+                    <a href="login.html" class="btn btn-primary btn-sm">
+                        <span class="en">Login / Register</span>
+                        <span class="he">כניסה / הרשמה</span>
+                    </a>
+                </div>
+                
+                <!-- User Menu (shown when logged in) -->
+                <div id="user-menu" class="user-menu" style="display: none;">
+                    <div class="user-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <span id="username" class="username">User</span>
+                    <i class="fas fa-chevron-down"></i>
+                    
+                    <div class="dropdown-menu">
+                        <a href="dashboard.html" class="dropdown-item">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <span class="en">Dashboard</span>
+                            <span class="he">לוח בקרה</span>
+                        </a>
+                        <a href="dashboard.html?tab=favorites" class="dropdown-item">
+                            <i class="fas fa-heart"></i>
+                            <span class="en">My Favorites</span>
+                            <span class="he">המועדפים שלי</span>
+                        </a>
+                        <a href="#" id="logout-btn" class="dropdown-item">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span class="en">Logout</span>
+                            <span class="he">התנתק</span>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="language-toggle">
+                    <button id="en-btn" class="active">EN</button>
+                    <button id="he-btn">עב</button>
+                </div>
+                <div class="theme-toggle">
+                    <input type="checkbox" id="theme-switch">
+                    <label for="theme-switch">
+                        <i class="fas fa-sun"></i>
+                        <i class="fas fa-moon"></i>
+                    </label>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+            <div class="test-container">
+                <h1>Authentication Test Page</h1>
+                <p>This page will help diagnose authentication issues with your account.</p>
+                
+                <div class="test-group">
+                    <div class="test-heading">1. Authentication Status</div>
+                    <div class="test-card">
+                        <div id="auth-status">Checking...</div>
+                        <div id="auth-details" class="test-result"></div>
+                    </div>
+                    <div class="test-buttons">
+                        <button id="check-auth" class="btn btn-primary">Check Auth Status</button>
+                        <button id="show-debug" class="btn">Show Debug Panel</button>
+                    </div>
+                </div>
+                
+                <div class="test-group">
+                    <div class="test-heading">2. Local Storage Data</div>
+                    <div class="test-card">
+                        <div id="storage-status">Checking...</div>
+                        <div id="storage-details" class="test-result"></div>
+                    </div>
+                    <div class="test-buttons">
+                        <button id="check-storage" class="btn btn-primary">Check Storage</button>
+                        <button id="clear-storage" class="btn">Clear Auth Storage</button>
+                    </div>
+                </div>
+                
+                <div class="test-group">
+                    <div class="test-heading">3. Server Connection</div>
+                    <div class="test-card">
+                        <div id="server-status">Checking...</div>
+                        <div id="server-details" class="test-result"></div>
+                    </div>
+                    <div class="test-buttons">
+                        <button id="check-server" class="btn btn-primary">Check Server</button>
+                        <button id="test-endpoints" class="btn">Test Auth Endpoints</button>
+                    </div>
+                </div>
+                
+                <div class="test-group">
+                    <div class="test-heading">4. Manual Authentication</div>
+                    <div class="test-card">
+                        <div id="manual-status">Not started</div>
+                        <div class="test-buttons" style="margin-top: 0.5rem;">
+                            <button id="create-fake-auth" class="btn">Create Test User</button>
+                            <button id="force-ui-update" class="btn">Force UI Update</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="test-buttons" style="justify-content: center;">
+                    <a href="login.html" class="btn btn-primary">Go to Login Page</a>
+                    <a href="dashboard.html" class="btn">Go to Dashboard</a>
+                    <button id="run-all-tests" class="btn btn-primary">Run All Tests</button>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <script src="js/auth.js"></script>
+    <script src="js/auth-debug.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Authentication status check
+            const checkAuthStatus = () => {
+                const authStatus = document.getElementById('auth-status');
+                const authDetails = document.getElementById('auth-details');
+                
+                if (window.authManager) {
+                    const isLoggedIn = window.authManager.isLoggedIn();
+                    const user = window.authManager.getUser();
+                    
+                    if (isLoggedIn && user) {
+                        authStatus.innerHTML = '<i class="fas fa-check-circle success"></i> Logged in';
+                        authDetails.innerHTML = `User: ${user.username || user.email || 'Unknown'}\nID: ${user._id || 'Unknown'}\nProvider: ${user.provider || 'Standard'}`;
+                    } else {
+                        authStatus.innerHTML = '<i class="fas fa-times-circle error"></i> Not logged in';
+                        authDetails.innerHTML = 'No user data available in AuthManager';
+                    }
+                } else {
+                    authStatus.innerHTML = '<i class="fas fa-exclamation-triangle warning"></i> AuthManager not available';
+                    authDetails.innerHTML = 'The authentication manager is not initialized';
+                }
+            };
+            
+            // Local storage check
+            const checkStorage = () => {
+                const storageStatus = document.getElementById('storage-status');
+                const storageDetails = document.getElementById('storage-details');
+                
+                const token = localStorage.getItem('token');
+                const user = localStorage.getItem('user');
+                const authSuccess = localStorage.getItem('auth_success');
+                
+                let statusHtml = '';
+                let detailsText = '';
+                
+                if (token) {
+                    statusHtml += '<div><i class="fas fa-check-circle success"></i> Token found in localStorage</div>';
+                    detailsText += `Token: ${token.substring(0, 20)}...\nLength: ${token.length} chars\n\n`;
+                } else {
+                    statusHtml += '<div><i class="fas fa-times-circle error"></i> No token in localStorage</div>';
+                }
+                
+                if (user) {
+                    try {
+                        const userData = JSON.parse(user);
+                        statusHtml += '<div><i class="fas fa-check-circle success"></i> User data found in localStorage</div>';
+                        detailsText += `User Data: ${JSON.stringify(userData, null, 2)}\n`;
+                    } catch (e) {
+                        statusHtml += '<div><i class="fas fa-exclamation-triangle warning"></i> Invalid user data in localStorage</div>';
+                        detailsText += `Error parsing user data: ${e.message}\nRaw data: ${user}\n`;
+                    }
+                } else {
+                    statusHtml += '<div><i class="fas fa-times-circle error"></i> No user data in localStorage</div>';
+                }
+                
+                if (authSuccess) {
+                    statusHtml += '<div><i class="fas fa-check-circle success"></i> Auth success flag found</div>';
+                    detailsText += `Auth Success: ${authSuccess}\n`;
+                } else {
+                    statusHtml += '<div><i class="fas fa-times-circle error"></i> No auth success flag found</div>';
+                }
+                
+                storageStatus.innerHTML = statusHtml;
+                storageDetails.innerHTML = detailsText || 'No authentication data in localStorage';
+            };
+            
+            // Server connection check
+            const checkServer = () => {
+                const serverStatus = document.getElementById('server-status');
+                const serverDetails = document.getElementById('server-details');
+                
+                serverStatus.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking server connection...';
+                
+                if (window.authManager) {
+                    window.authManager.checkServerStatus()
+                        .then(() => {
+                            if (window.authManager.isServerRunning) {
+                                serverStatus.innerHTML = '<i class="fas fa-check-circle success"></i> Server is running';
+                                serverDetails.innerHTML = `API URL: ${window.authManager.apiUrl}\nStatus: Connected`;
+                            } else {
+                                serverStatus.innerHTML = '<i class="fas fa-times-circle error"></i> Server is not running';
+                                serverDetails.innerHTML = 'The server is not responding properly';
+                            }
+                        })
+                        .catch(error => {
+                            serverStatus.innerHTML = '<i class="fas fa-times-circle error"></i> Server connection error';
+                            serverDetails.innerHTML = `Error: ${error.message}`;
+                        });
+                } else {
+                    serverStatus.innerHTML = '<i class="fas fa-exclamation-triangle warning"></i> Cannot check server';
+                    serverDetails.innerHTML = 'AuthManager not available to check server';
+                }
+            };
+            
+            // Test auth endpoints
+            const testEndpoints = () => {
+                const serverStatus = document.getElementById('server-status');
+                const serverDetails = document.getElementById('server-details');
+                
+                serverStatus.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testing auth endpoints...';
+                serverDetails.innerHTML = 'Testing multiple endpoints...';
+                
+                // Base URL
+                const baseUrl = window.authManager ? window.authManager.apiUrl : 'http://localhost:3000/api/v1';
+                
+                // Endpoints to test
+                const endpoints = [
+                    { url: `${baseUrl}/health`, name: 'Health Check' },
+                    { url: `${baseUrl}/auth/me`, name: 'Current User', needsAuth: true },
+                    { url: `${baseUrl}/auth/google`, name: 'Google Auth', redirect: true }
+                ];
+                
+                let results = [];
+                let completed = 0;
+                
+                // Get token if available
+                const token = localStorage.getItem('token');
+                
+                // Test each endpoint
+                endpoints.forEach(endpoint => {
+                    if (endpoint.redirect) {
+                        results.push(`${endpoint.name}: Redirect endpoint, not testing directly`);
+                        completed++;
+                        
+                        if (completed === endpoints.length) {
+                            serverStatus.innerHTML = '<i class="fas fa-check-circle success"></i> Endpoint tests completed';
+                            serverDetails.innerHTML = results.join('\n\n');
+                        }
+                        return;
+                    }
+                    
+                    const headers = { 'Accept': 'application/json' };
+                    if (endpoint.needsAuth && token) {
+                        headers['Authorization'] = `Bearer ${token}`;
+                    }
+                    
+                    fetch(endpoint.url, {
+                        method: 'GET',
+                        headers,
+                        credentials: 'include'
+                    })
+                    .then(res => {
+                        const status = res.status;
+                        return res.text().then(text => {
+                            let data;
+                            try {
+                                data = JSON.parse(text);
+                            } catch {
+                                data = text;
+                            }
+                            return { status, data };
+                        });
+                    })
+                    .then(({ status, data }) => {
+                        results.push(`${endpoint.name}:\nStatus: ${status}\nResponse: ${JSON.stringify(data, null, 2)}`);
+                    })
+                    .catch(error => {
+                        results.push(`${endpoint.name}:\nError: ${error.message}`);
+                    })
+                    .finally(() => {
+                        completed++;
+                        if (completed === endpoints.length) {
+                            serverStatus.innerHTML = '<i class="fas fa-check-circle success"></i> Endpoint tests completed';
+                            serverDetails.innerHTML = results.join('\n\n');
+                        }
+                    });
+                });
+            };
+            
+            // Create fake user auth
+            const createFakeAuth = () => {
+                const manualStatus = document.getElementById('manual-status');
+                
+                const fakeUser = {
+                    _id: 'test123',
+                    username: 'Test User',
+                    email: 'test@example.com',
+                    provider: 'manual',
+                    createdAt: new Date().toISOString()
+                };
+                
+                const fakeToken = 'fake_token_' + Math.random().toString(36).substring(2);
+                
+                localStorage.setItem('user', JSON.stringify(fakeUser));
+                localStorage.setItem('token', fakeToken);
+                localStorage.setItem('auth_success', 'true');
+                
+                if (window.authManager) {
+                    window.authManager.user = fakeUser;
+                    window.authManager.updateAuthUI();
+                }
+                
+                manualStatus.innerHTML = '<i class="fas fa-check-circle success"></i> Test user created and activated';
+                
+                // Update other sections
+                checkAuthStatus();
+                checkStorage();
+            };
+            
+            // Force UI update
+            const forceUIUpdate = () => {
+                const manualStatus = document.getElementById('manual-status');
+                
+                if (window.authManager) {
+                    window.authManager.updateAuthUI();
+                    manualStatus.innerHTML = '<i class="fas fa-check-circle success"></i> UI update forced';
+                } else {
+                    manualStatus.innerHTML = '<i class="fas fa-times-circle error"></i> AuthManager not available';
+                }
+            };
+            
+            // Clear auth storage
+            const clearStorage = () => {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                localStorage.removeItem('auth_success');
+                
+                if (window.authManager) {
+                    window.authManager.user = null;
+                    window.authManager.updateAuthUI();
+                }
+                
+                checkStorage();
+                checkAuthStatus();
+            };
+            
+            // Run all tests
+            const runAllTests = () => {
+                checkAuthStatus();
+                checkStorage();
+                checkServer();
+                setTimeout(testEndpoints, 1000);
+            };
+            
+            // Initial checks
+            checkAuthStatus();
+            checkStorage();
+            checkServer();
+            
+            // Event listeners
+            document.getElementById('check-auth').addEventListener('click', checkAuthStatus);
+            document.getElementById('check-storage').addEventListener('click', checkStorage);
+            document.getElementById('check-server').addEventListener('click', checkServer);
+            document.getElementById('test-endpoints').addEventListener('click', testEndpoints);
+            document.getElementById('show-debug').addEventListener('click', () => {
+                if (window.showAuthDebug) window.showAuthDebug();
+            });
+            document.getElementById('clear-storage').addEventListener('click', clearStorage);
+            document.getElementById('create-fake-auth').addEventListener('click', createFakeAuth);
+            document.getElementById('force-ui-update').addEventListener('click', forceUIUpdate);
+            document.getElementById('run-all-tests').addEventListener('click', runAllTests);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us | Font Match</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Open+Sans:wght@300;400;600&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body class="light-mode">
+    <header id="header-container"></header>
+
+    <main>
+        <div class="page-content">
+            <h1 class="page-title en">About Us</h1>
+            <h1 class="page-title he">אודות</h1>
+            
+            <div class="page-section en">
+                <h2>Our Mission</h2>
+                <p>Font Match was created with a simple mission: to bridge the typographic gap between languages. We believe that multilingual design shouldn't require compromise on aesthetic quality or brand consistency.</p>
+                <p>Our AI-powered font matching technology helps designers, translators, and content creators find the perfect font pairings across languages, ensuring visual harmony in multilingual projects.</p>
+            </div>
+            
+            <div class="page-section he">
+                <h2>המשימה שלנו</h2>
+                <p>התאמת גופנים נוצרה עם משימה פשוטה: לגשר על הפער הטיפוגרפי בין שפות. אנו מאמינים שעיצוב רב לשוני לא צריך לדרוש פשרה על איכות אסתטית או עקביות מותג.</p>
+                <p>טכנולוגיית התאמת הגופנים מבוססת הבינה המלאכותית שלנו עוזרת למעצבים, מתרגמים ויוצרי תוכן למצוא את זוגות הגופנים המושלמים בין שפות, ומבטיחה הרמוניה חזותית בפרויקטים רב לשוניים.</p>
+            </div>
+            
+            <div class="page-section en">
+                <h2>Our Technology</h2>
+                <p>Our font matching algorithm analyzes thousands of typographic characteristics to find visually harmonious matches across different scripts. We consider factors like:</p>
+                <ul>
+                    <li>X-height and proportion ratios</li>
+                    <li>Stroke contrast and weight</li>
+                    <li>Character spacing and rhythm</li>
+                    <li>Stylistic details and terminals</li>
+                    <li>Overall aesthetic impression</li>
+                </ul>
+                <p>The algorithm continues to improve through machine learning, trained on professionally curated font pairs and user feedback.</p>
+            </div>
+            
+            <div class="page-section he">
+                <h2>הטכנולוגיה שלנו</h2>
+                <p>האלגוריתם להתאמת גופנים שלנו מנתח אלפי מאפיינים טיפוגרפיים כדי למצוא התאמות הרמוניות חזותית בין סוגי כתב שונים. אנו מתחשבים בגורמים כגון:</p>
+                <ul>
+                    <li>יחסי גובה וגודל</li>
+                    <li>ניגודיות וכובד קו</li>
+                    <li>מרווח ומקצב של תווים</li>
+                    <li>פרטים סגנוניים וקצוות</li>
+                    <li>רושם אסתטי כללי</li>
+                </ul>
+                <p>האלגוריתם ממשיך להשתפר באמצעות למידת מכונה, שמאומנת על זוגות גופנים שאוצרו באופן מקצועי ומשוב משתמשים.</p>
+            </div>
+            
+            <div class="page-section en">
+                <h2>Our Team</h2>
+                <p>We're a passionate team of typographers, designers, and developers dedicated to creating better multilingual typography solutions.</p>
+                
+                <div class="team-members">
+                    <div class="team-member">
+                        <div class="member-info">
+                            <div class="member-name">XPizzaMCX</div>
+                            <div class="member-title">Founder & Developer</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="page-section he">
+                <h2>הצוות שלנו</h2>
+                <p>אני מפתח נלהב שמוקדש ליצירת פתרונות טיפוגרפיה רב-לשוניים טובים יותר.</p>
+                
+                <div class="team-members">
+                    <div class="team-member">
+                        <div class="member-info">
+                            <div class="member-name">XPizzaMCX</div>
+                            <div class="member-title">מייסד ומפתח</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer id="footer-container"></footer>
+
+    <script src="js/auth.js"></script>
+    <script src="js/components/Navigation.js"></script>
+    <script src="js/translation.js"></script>
+    <script src="js/mock-server.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const body = document.body;
+            
+            function setLanguage(lang) {
+                body.classList.remove('active-lang-en', 'active-lang-he', 'rtl');
+                body.classList.add(`active-lang-${lang}`);
+                
+                if (lang === 'he') {
+                    body.classList.add('rtl');
+                }
+                
+                localStorage.setItem('language', lang);
+            }
+
+            const savedLanguage = localStorage.getItem('language') || 'en';
+            setLanguage(savedLanguage);
+
+            document.addEventListener('language-change', (e) => {
+                setLanguage(e.detail.lang);
+            });
+        });
+    </script>
+</body>
+</html>

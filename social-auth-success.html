@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <base href="/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authentication Successful | Font Match</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Heebo:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        .auth-container {
+            max-width: 500px;
+            margin: 50px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .auth-options {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .auth-button {
+            padding: 12px 15px;
+            border: none;
+            border-radius: 5px;
+            background: #3498db;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .auth-button.secondary {
+            background: #95a5a6;
+        }
+        .user-card {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            cursor: pointer;
+        }
+        .user-card:hover {
+            background-color: #f8f9fa;
+        }
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            margin-right: 15px;
+        }
+        .user-details {
+            text-align: left;
+        }
+        .username {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .status-box {
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        .status-success {
+            background: #2ecc71;
+            color: white;
+        }
+        .status-warning {
+            background: #f39c12;
+            color: white;
+        }
+        .status-error {
+            background: #e74c3c;
+            color: white;
+        }
+        .debug-panel {
+            background: rgba(0,0,0,0.85);
+            color: #00ff00;
+            font-family: monospace;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+            text-align: left;
+            max-height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        #log-messages {
+            margin-top: 10px;
+        }
+        .loading-spinner {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        body.dark-mode .auth-container {
+            background-color: #2d3436;
+            color: #dfe6e9;
+        }
+        body.dark-mode .user-card {
+            border-color: #636e72;
+            background-color: #2d3436;
+        }
+        body.dark-mode .user-card:hover {
+            background-color: #222;
+        }
+    </style>
+</head>
+<body class="light-mode">
+    <div class="auth-container" id="auth-container">
+        <h2>Social Authentication</h2>
+        <p>Processing your login...</p>
+        <div style="margin: 20px 0;">
+            <div class="loading-spinner"></div>
+        </div>
+        
+        <div class="debug-panel">
+            <div>DEBUG INFORMATION</div>
+            <div id="log-messages"></div>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const logEl = document.getElementById('log-messages');
+        
+        function log(message) {
+          console.log(message);
+          if (logEl) {
+            const entry = document.createElement('div');
+            entry.textContent = message;
+            logEl.appendChild(entry);
+          }
+        }
+
+        log('Social auth page loaded. Processing login...');
+
+        const params = new URLSearchParams(window.location.search);
+        const token = params.get('token');
+
+        if (!token) {
+          log('Error: No token found in URL. Redirecting to login.');
+          setTimeout(() => { window.location.href = 'login.html'; }, 3000);
+          return;
+        }
+
+        log('Token found. Storing in localStorage.');
+        localStorage.setItem('token', token);
+
+        // auth.js is already loaded and window.authManager should be available.
+        // Its constructor will call checkAuth() because it found the token.
+        // We just need to listen for the result.
+        log('Waiting for authentication to complete...');
+
+        let authCompleted = false;
+
+        document.addEventListener('auth-change', ({ detail }) => {
+          if (authCompleted) return; // Prevent multiple redirects
+
+          log('Auth change event received.');
+          if (detail.user) {
+            authCompleted = true;
+            log('Authentication successful! User data received:');
+            log(JSON.stringify(detail.user, null, 2));
+            log('Redirecting to dashboard...');
+            
+            // Redirect to dashboard after a short delay
+            setTimeout(() => { window.location.href = 'dashboard.html'; }, 1000);
+          } else {
+            log('Auth change event with null user. Waiting for server verification.');
+          }
+        });
+
+        // Fallback in case the event is missed or the token is invalid
+        setTimeout(() => {
+            if (!authCompleted) {
+                 log('Fallback check: Authentication timed out. Redirecting to login.');
+                 window.location.href = 'login.html';
+            }
+        }, 5000); // Wait 5 seconds for auth to complete
+
+      });
+    </script>
+</body>
+</html>

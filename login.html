@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | Font Match</title>
+    <!-- Ensure all relative links resolve to server root -->
+    <base href="/">
+    <meta name="description" content="Log in to Font Match to save your favorite font matches and personalize your experience.">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Heebo:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <style>
+        /* Auth page specific styles */
+        .auth-page {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem 1rem;
+            background-color: var(--bg-color);
+            transition: background-color 0.3s ease;
+        }
+        
+        .auth-container {
+            width: 100%;
+            max-width: 420px;
+            animation: fade-in 0.5s ease-out;
+        }
+
+        @keyframes fade-in {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .auth-box {
+            background-color: var(--card-bg);
+            border-radius: var(--radius-xl); /* Increased radius */
+            box-shadow: var(--shadow-lg); /* Softer, larger shadow */
+            padding: 2.5rem; /* Increased padding */
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+        
+        .auth-logo {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            color: var(--primary-color);
+            font-size: 2.5rem; /* Larger icon */
+            background-color: var(--primary-light);
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .auth-title {
+            text-align: center;
+            font-weight: 700; /* Bolder */
+            font-size: 1.75rem; /* Larger */
+            margin-bottom: 0.5rem;
+            color: var(--text-color);
+        }
+
+        #server-status {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+        
+        /* Auth tabs */
+        .auth-tabs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            margin-bottom: 1.5rem;
+            background-color: var(--bg-alt);
+            border-radius: var(--radius-md);
+            padding: 4px;
+        }
+        
+        .auth-tab {
+            padding: 0.75rem;
+            background: none;
+            border: none;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            position: relative;
+            border-radius: var(--radius-sm);
+            transition: color 0.3s ease, background-color 0.3s ease;
+        }
+        
+        .auth-tab.active {
+            color: var(--primary-contrast);
+            background-color: var(--primary-color);
+        }
+        
+        /* Form styles */
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 0.85rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 1rem;
+            background-color: var(--bg-alt);
+            color: var(--text-color);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            font-family: var(--font-main);
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
+        
+        .password-input {
+            position: relative;
+        }
+        
+        .toggle-password {
+            position: absolute;
+            top: 50%;
+            right: 1rem;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0.5rem;
+        }
+        
+        .error-message {
+            color: #e74c3c;
+            font-size: 0.875rem;
+            margin-top: 1rem;
+            text-align: center;
+            min-height: 1.5rem;
+        }
+
+        .form-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+
+        .forgot-password {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+        .forgot-password:hover {
+            text-decoration: underline;
+        }
+        
+        /* Social buttons */
+        .social-login {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        
+        .social-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            padding: 0.85rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            background-color: transparent;
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--text-color);
+            cursor: pointer;
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+        
+        .social-button:hover {
+            background-color: var(--hover-color);
+            border-color: var(--border-hover);
+        }
+        
+        .social-button i {
+            font-size: 1.2rem;
+        }
+
+        .social-button.google {
+            color: #db4437;
+        }
+        
+        .social-button.github {
+            color: var(--text-color);
+        }
+        
+        /* Divider */
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 1.5rem 0;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+        
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background-color: var(--border-color);
+        }
+        
+        .divider span {
+            padding: 0 1rem;
+        }
+        
+        /* RTL Support */
+        [dir="rtl"] .logo i {
+            margin-right: 0;
+            margin-left: 0.5rem;
+        }
+        
+        [dir="rtl"] .toggle-password {
+            right: auto;
+            left: 1rem;
+        }
+    </style>
+</head>
+<body class="light-mode">
+    <header id="header-container"></header>
+
+    <main class="auth-page">
+        <div class="auth-container">
+            <div class="auth-box">
+                <div class="auth-logo">
+                    <i class="fas fa-font"></i>
+                </div>
+                <h1 class="auth-title">
+                    <span class="en">Welcome to Font Match</span>
+                    <span class="he">ברוכים הבאים להתאמת גופנים</span>
+                </h1>
+                <div id="server-status" style="text-align: center; margin-bottom: 1rem; font-size: 0.8rem; color: #999;">
+                    Checking server status...
+                </div>
+                
+                <div class="auth-tabs">
+                    <button class="auth-tab active" data-tab="login">
+                        <span class="en">Login</span>
+                        <span class="he">כניסה</span>
+                    </button>
+                    <button class="auth-tab" data-tab="register">
+                        <span class="en">Register</span>
+                        <span class="he">הרשמה</span>
+                    </button>
+                </div>
+
+                <div class="social-login">
+                    <a href="/api/v1/auth/google" class="social-button google" target="_self">
+                        <i class="fab fa-google"></i>
+                        <span class="en">Continue with Google</span>
+                        <span class="he">המשך עם Google</span>
+                    </a>
+                    <a href="/api/v1/auth/github" class="social-button github" target="_self">
+                        <i class="fab fa-github"></i>
+                        <span class="en">Continue with GitHub</span>
+                        <span class="he">המשך עם GitHub</span>
+                    </a>
+                </div>
+
+                <div class="divider">
+                    <span class="en">or</span>
+                    <span class="he">או</span>
+                </div>
+
+                <!-- Login Form -->
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="login-email">
+                            <span class="en">Email</span>
+                            <span class="he">דוא״ל</span>
+                        </label>
+                        <input type="email" id="login-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">
+                            <span class="en">Password</span>
+                            <span class="he">סיסמה</span>
+                        </label>
+                        <div class="password-input">
+                            <input type="password" id="login-password" required>
+                            <button type="button" class="toggle-password" tabindex="-1">
+                                <i class="far fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-options">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="remember-me">
+                            <span class="en">Remember me</span>
+                            <span class="he">זכור אותי</span>
+                        </label>
+                    </div>
+                    <div id="login-error" class="error-message"></div>
+                    <button type="submit" id="login-button" class="btn btn-primary">
+                        <span class="en">Log In</span>
+                        <span class="he">כניסה</span>
+                    </button>
+                </form>
+
+                <!-- Register Form -->
+                <form id="register-form" style="display: none;">
+                    <div class="form-group">
+                        <label for="register-username">
+                            <span class="en">Username</span>
+                            <span class="he">שם משתמש</span>
+                        </label>
+                        <input type="text" id="register-username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-email">
+                            <span class="en">Email</span>
+                            <span class="he">דוא״ל</span>
+                        </label>
+                        <input type="email" id="register-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-password">
+                            <span class="en">Password</span>
+                            <span class="he">סיסמה</span>
+                        </label>
+                        <div class="password-input">
+                            <input type="password" id="register-password" required>
+                            <button type="button" class="toggle-password" tabindex="-1">
+                                <i class="far fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="register-error" class="error-message"></div>
+                    <button type="submit" id="register-button" class="btn btn-primary">
+                        <span class="en">Register</span>
+                        <span class="he">הרשמה</span>
+                    </button>
+                </form>
+
+            </div>
+        </div>
+    </main>
+
+    <footer id="footer-container"></footer>
+
+    <script src="js/auth.js"></script>
+    <script src="js/components/Navigation.js"></script>
+    <script src="js/login.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // If user is already logged in, redirect to home page
+            if (authManager.isAuthenticated()) {
+                window.location.href = 'index.html';
+                return; // Stop further script execution
+            }
+
+            const body = document.body;
+            
+            function setLanguage(lang) {
+                body.classList.remove('active-lang-en', 'active-lang-he', 'rtl');
+                body.classList.add(`active-lang-${lang}`);
+                document.documentElement.lang = lang;
+                document.documentElement.dir = lang === 'he' ? 'rtl' : 'ltr';
+                
+                if (lang === 'he') {
+                    body.classList.add('rtl');
+                }
+                
+                localStorage.setItem('language', lang);
+            }
+
+            const savedLanguage = localStorage.getItem('language') || 'en';
+            setLanguage(savedLanguage);
+
+            document.addEventListener('language-change', (e) => {
+                setLanguage(e.detail.lang);
+            });
+        });
+    </script>
+</body>
+</html>

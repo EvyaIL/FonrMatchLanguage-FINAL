@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Us | Font Match</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Open+Sans:wght@300;400;600&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        .form-notice {
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background-color: #fff3cd;
+            color: #664d03;
+            border: 1px solid #ffecb5;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .dark-mode .form-notice {
+            background-color: #332701;
+            color: #ffdc73;
+            border-color: #4d3b02;
+        }
+    </style>
+</head>
+<body class="light-mode">
+    <header id="header-container"></header>
+
+    <main>
+        <div class="page-content">
+            <h1 class="page-title en">Contact Us</h1>
+            <h1 class="page-title he">צור קשר</h1>
+            
+            <div class="page-section en">
+                <p>Have questions, feedback, or suggestions about Font Match? We'd love to hear from you! Fill out the form below or reach out to us directly.</p>
+                
+                <div class="contact-info">
+                    <p><i class="fas fa-envelope"></i> Email: <a href="mailto:anizzamasub@gmail.com">anizzamasub@gmail.com</a></p>
+                    <p><i class="fas fa-phone"></i> Phone: <a href="tel:0539188641">053-9188641</a></p>
+                    <p><i class="fas fa-globe"></i> Website: <a href="https://anizzama.vercel.app/" target="_blank">anizzama.vercel.app</a></p>
+                </div>
+            </div>
+            
+            <div class="page-section he">
+                <p>יש לך שאלות, משוב או הצעות לגבי התאמת גופנים? נשמח לשמוע ממך! מלא את הטופס למטה או פנה אלינו ישירות.</p>
+                
+                <div class="contact-info">
+                    <p><i class="fas fa-envelope"></i> אימייל: <a href="mailto:anizzamasub@gmail.com">anizzamasub@gmail.com</a></p>
+                    <p><i class="fas fa-phone"></i> טלפון: <a href="tel:0539188641">053-9188641</a></p>
+                    <p><i class="fas fa-globe"></i> אתר: <a href="https://anizzama.vercel.app/" target="_blank">anizzama.vercel.app</a></p>
+                </div>
+            </div>
+            
+            <div class="contact-form en">
+                <h2>Send us a Message</h2>
+                <p class="form-notice">The contact form is currently not working. Please email us directly at <a href="mailto:anizzamasub@gmail.com">anizzamasub@gmail.com</a>.</p>
+                <form id="contact-form-en">
+                    <div class="form-group">
+                        <label for="name-en">Name</label>
+                        <input type="text" id="name-en" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email-en">Email</label>
+                        <input type="email" id="email-en" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="subject-en">Subject</label>
+                        <input type="text" id="subject-en" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="message-en">Message</label>
+                        <textarea id="message-en" class="form-control" rows="5" required></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn-submit">Send Message</button>
+                </form>
+            </div>
+            
+            <div class="contact-form he">
+                <h2>שלח לנו הודעה</h2>
+                <p class="form-notice">טופס יצירת הקשר אינו פעיל כרגע. אנא שלח לנו דוא"ל ישירות לכתובת <a href="mailto:anizzamasub@gmail.com">anizzamasub@gmail.com</a>.</p>
+                <form id="contact-form-he">
+                    <div class="form-group">
+                        <label for="name-he">שם</label>
+                        <input type="text" id="name-he" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email-he">אימייל</label>
+                        <input type="email" id="email-he" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="subject-he">נושא</label>
+                        <input type="text" id="subject-he" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="message-he">הודעה</label>
+                        <textarea id="message-he" class="form-control" rows="5" required></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn-submit">שלח הודעה</button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <footer id="footer-container"></footer>
+
+    <script src="js/auth.js"></script>
+    <script src="js/components/Navigation.js"></script>
+    <script src="js/translation.js"></script>
+    <script src="js/mock-server.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const formEn = document.getElementById('contact-form-en');
+            const formHe = document.getElementById('contact-form-he');
+
+            function handleFormSubmit(event) {
+                event.preventDefault();
+                alert('Thank you for your message! We will get back to you soon.');
+                event.target.reset();
+            }
+
+            if(formEn) formEn.addEventListener('submit', handleFormSubmit);
+            if(formHe) formHe.addEventListener('submit', handleFormSubmit);
+
+            const body = document.body;
+            
+            function setLanguage(lang) {
+                body.classList.remove('active-lang-en', 'active-lang-he', 'rtl');
+                body.classList.add(`active-lang-${lang}`);
+                
+                if (lang === 'he') {
+                    body.classList.add('rtl');
+                }
+                
+                localStorage.setItem('language', lang);
+            }
+
+            const savedLanguage = localStorage.getItem('language') || 'en';
+            setLanguage(savedLanguage);
+
+            document.addEventListener('language-change', (e) => {
+                setLanguage(e.detail.lang);
+            });
+        });
+    </script>
+</body>
+</html>

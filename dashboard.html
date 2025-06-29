@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Dashboard | Font Match</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Heebo:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+</head>
+<body class="light-mode">
+    <header>
+        <!-- Navigation will be loaded by components/Navigation.js -->
+    </header>
+
+    <main class="dashboard-main">
+        <div class="dashboard-container">
+            <!-- Sidebar -->
+            <aside class="dashboard-sidebar">
+                <div class="user-profile">
+                    <div class="profile-avatar" id="profile-avatar-container">
+                        <img src="https://via.placeholder.com/80" alt="User Avatar" id="profile-avatar-img">
+                    </div>
+                    <div class="profile-info">
+                        <h3 id="profile-name">Loading...</h3>
+                        <p id="profile-email">Loading...</p>
+                    </div>
+                </div>
+                
+                <nav class="dashboard-nav">
+                    <ul>
+                        <li><a href="#" class="nav-item active" data-tab="overview"><i class="fas fa-tachometer-alt"></i> <span class="en">Overview</span><span class="he">סקירה כללית</span></a></li>
+                        <li><a href="#" class="nav-item" data-tab="font-matches"><i class="fas fa-heart"></i> <span class="en">My Favorite Matches</span><span class="he">ההתאמות המועדפות שלי</span></a></li>
+                        <li><a href="#" class="nav-item" data-tab="history"><i class="fas fa-history"></i> <span class="en">Search History</span><span class="he">היסטוריית חיפוש</span></a></li>
+                        <li><a href="#" class="nav-item" data-tab="settings"><i class="fas fa-cog"></i> <span class="en">Settings</span><span class="he">הגדרות</span></a></li>
+                    </ul>
+                </nav>
+
+                <div class="sidebar-cta">
+                    <a href="index.html" class="btn btn-primary">
+                        <i class="fas fa-magic"></i>
+                        <span class="en">New Font Match</span>
+                        <span class="he">התאמת גופן חדשה</span>
+                    </a>
+                </div>
+            </aside>
+            
+            <!-- Main Content -->
+            <div class="dashboard-content">
+                <!-- Overview Tab -->
+                <section id="overview" class="dashboard-tab active">
+                    <div class="tab-header">
+                        <h1 class="en">Dashboard Overview</h1>
+                        <h1 class="he">סקירה כללית</h1>
+                        <p class="en">Welcome back! Here's a summary of your activity.</p>
+                        <p class="he">ברוך שובך! הנה סיכום הפעילות שלך.</p>
+                    </div>
+                    <div class="stats-container">
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="fas fa-heart"></i></div>
+                            <div class="stat-info">
+                                <h4 class="en">Favorite Pairs</h4><h4 class="he">זוגות מועדפים</h4>
+                                <p class="stat-number" id="stats-favorites">0</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="fas fa-search"></i></div>
+                            <div class="stat-info">
+                                <h4 class="en">Total Searches</h4><h4 class="he">חיפושים סה"כ</h4>
+                                <p class="stat-number" id="stats-searches">0</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="fas fa-calendar-alt"></i></div>
+                            <div class="stat-info">
+                                <h4 class="en">Member Since</h4><h4 class="he">חבר מאז</h4>
+                                <p class="stat-number" id="stats-member-since">...</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="content-card">
+                        <h2 class="en">Recent Activity</h2><h2 class="he">פעילות אחרונה</h2>
+                        <ul id="recent-activity-list" class="history-list"></ul>
+                    </div>
+                </section>
+
+                <!-- My Favorite Matches Tab -->
+                <section id="font-matches" class="dashboard-tab">
+                    <div class="tab-header">
+                        <h1 class="en">My Favorite Font Matches</h1>
+                        <h1 class="he">התאמות הגופנים המועדפות שלי</h1>
+                    </div>
+                    <div class="content-card">
+                        <ul id="favorite-pairs-list" class="font-pair-list"></ul>
+                    </div>
+                </section>
+
+                <!-- Search History Tab -->
+                <section id="history" class="dashboard-tab">
+                    <div class="tab-header">
+                        <h1 class="en">Search History</h1>
+                        <h1 class="he">היסטוריית חיפוש</h1>
+                    </div>
+                    <div class="content-card">
+                        <ul id="search-history-list" class="history-list"></ul>
+                    </div>
+                </section>
+
+                <!-- Settings Tab -->
+                <section id="settings" class="dashboard-tab">
+                    <div class="tab-header">
+                        <h1 class="en">Account Settings</h1>
+                        <h1 class="he">הגדרות חשבון</h1>
+                    </div>
+                    <div class="content-card">
+                        <form id="settings-form" class="settings-form">
+                            <div class="form-group">
+                                <label for="username-setting" class="en">Username</label>
+                                <label for="username-setting" class="he">שם משתמש</label>
+                                <input type="text" id="username-setting" disabled>
+                            </div>
+                            <div class="form-group">
+                                <label for="email-setting" class="en">Email</label>
+                                <label for="email-setting" class="he">אימייל</label>
+                                <input type="email" id="email-setting" disabled>
+                            </div>
+                            <div class="form-group">
+                                <label for="language-setting" class="en">Preferred Language</label>
+                                <label for="language-setting" class="he">שפה מועדפת</label>
+                                <select id="language-setting">
+                                    <option value="en">English</option>
+                                    <option value="he">עברית</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary en">Save Changes</button>
+                            <button type="submit" class="btn btn-primary he">שמור שינויים</button>
+                        </form>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <!-- Footer will be loaded by components/Navigation.js -->
+    </footer>
+
+    <script src="js/auth.js"></script>
+    <script src="js/components/Navigation.js"></script>
+    <script src="js/translation.js"></script>
+    <script src="js/dashboard.js"></script>
+</body>
+</html>
