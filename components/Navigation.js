@@ -70,17 +70,22 @@ const Navigation = () => {
               <ul className="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                 <li>
                   <Link href="/dashboard">
-                    <a className="dropdown-item">Dashboard</a>
+                    <a className="dropdown-item"><i className="fas fa-tachometer-alt"></i> Dashboard</a>
                   </Link>
                 </li>
                 <li>
-                  <Link href="/profile">
-                    <a className="dropdown-item">Profile</a>
+                  <Link href="/dashboard?tab=favorites">
+                    <a className="dropdown-item"><i className="fas fa-heart"></i> My Favorites</a>
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/dashboard?tab=history">
+                    <a className="dropdown-item"><i className="fas fa-history"></i> Search History</a>
                   </Link>
                 </li>
                 <li><hr className="dropdown-divider" /></li>
                 <li>
-                  <button className="dropdown-item" onClick={handleLogout}>Logout</button>
+                  <button className="dropdown-item" onClick={handleLogout}><i className="fas fa-sign-out-alt"></i> Logout</button>
                 </li>
               </ul>
             </div>

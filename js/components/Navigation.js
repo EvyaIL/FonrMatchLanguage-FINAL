@@ -34,6 +34,16 @@ const navigationHTML = `
                     <span class="en">Dashboard</span>
                     <span class="he">לוח בקרה</span>
                 </a>
+                <a href="dashboard.html?tab=favorites" class="dropdown-item">
+                    <i class="fas fa-heart"></i>
+                    <span class="en">My Favorites</span>
+                    <span class="he">המועדפים שלי</span>
+                </a>
+                <a href="dashboard.html?tab=history" class="dropdown-item">
+                    <i class="fas fa-history"></i>
+                    <span class="en">Search History</span>
+                    <span class="he">היסטורית חיפוש</span>
+                </a>
                 <a href="#" id="logout-btn" class="dropdown-item">
                     <i class="fas fa-sign-out-alt"></i>
                     <span class="en">Logout</span>
