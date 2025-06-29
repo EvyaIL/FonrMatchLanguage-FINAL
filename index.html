@@ -37,6 +37,46 @@
                     </a>
                 </div>
                 
+                <!-- Auth Buttons (shown when logged out) -->
+                <div id="auth-buttons" class="auth-nav-buttons">
+                    <a href="login.html" class="btn btn-primary btn-sm">
+                        <span class="en">Login / Register</span>
+                        <span class="he">כניסה / הרשמה</span>
+                    </a>
+                </div>
+                
+                <!-- User Menu (shown when logged in) -->
+                <div id="user-menu" class="user-menu" style="display: none;">
+                    <div class="user-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <span id="username" class="username">User</span>
+                    <i class="fas fa-chevron-down"></i>
+                    
+                    <div class="dropdown-menu">
+                        <a href="dashboard.html" class="dropdown-item">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <span class="en">Dashboard</span>
+                            <span class="he">לוח בקרה</span>
+                        </a>
+                        <a href="dashboard.html?tab=favorites" class="dropdown-item">
+                            <i class="fas fa-heart"></i>
+                            <span class="en">My Favorites</span>
+                            <span class="he">המועדפים שלי</span>
+                        </a>
+                        <a href="dashboard.html?tab=history" class="dropdown-item">
+                            <i class="fas fa-history"></i>
+                            <span class="en">Search History</span>
+                            <span class="he">היסטורית חיפוש</span>
+                        </a>
+                        <a href="#" id="logout-btn" class="dropdown-item">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span class="en">Logout</span>
+                            <span class="he">התנתק</span>
+                        </a>
+                    </div>
+                </div>
+                
                 <div class="language-toggle">
                     <button id="en-btn" class="active">EN</button>
                     <button id="he-btn">עב</button>
@@ -287,35 +327,48 @@
     <script src="js/app.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Check authentication state and update UI
-            function updateAuthUI() {
-                const authButtons = document.getElementById('auth-buttons');
-                const userMenu = document.getElementById('user-menu');
-                const username = document.getElementById('username');
-                
-                if (authManager && authManager.isAuthenticated()) {
-                    // User is logged in
+            // --- AUTH UI LOGIC --- //
+            const authButtons = document.getElementById('auth-buttons');
+            const userMenu = document.getElementById('user-menu');
+            const usernameEl = document.getElementById('username');
+            const userAvatar = userMenu.querySelector('.user-avatar');
+
+            function updateAuthUI(event) {
+                const user = event && event.detail ? event.detail.user : (window.authManager ? authManager.getUser() : null);
+
+                if (user) {
                     authButtons.style.display = 'none';
                     userMenu.style.display = 'flex';
-                    
-                    // Update username if available
-                    const user = authManager.getCurrentUser();
-                    if (user && user.username) {
-                        username.textContent = user.username;
+                    usernameEl.textContent = user.name || user.email.split('@')[0];
+                    if (user.avatar) {
+                        userAvatar.innerHTML = `<img src="${user.avatar}" alt="User Avatar">`;
+                    } else {
+                        userAvatar.innerHTML = `<i class="fas fa-user"></i>`;
                     }
                 } else {
-                    // User is not logged in
                     authButtons.style.display = 'flex';
                     userMenu.style.display = 'none';
                 }
             }
-            
+
+            const logoutBtn = document.getElementById('logout-btn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (window.authManager) {
+                        authManager.logout();
+                    }
+                });
+            }
+
+            // Listen for auth changes from auth.js
+            document.addEventListener('auth-change', updateAuthUI);
+
             // Initial UI update
-            updateAuthUI();
-            
-            // Listen for auth state changes
-            document.addEventListener('auth-state-changed', updateAuthUI);
-            
+            if (window.authManager) {
+                updateAuthUI({ detail: { user: window.authManager.getUser() } });
+            }
+
             // Original language handling code
             const body = document.body;
             
