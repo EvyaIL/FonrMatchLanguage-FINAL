@@ -79,11 +79,14 @@ const startServer = async () => {
     // Initialize passport
     configurePassport();
 
-    // Serve static files from various directories
-    app.use(express.static(path.join(__dirname, '..'))); // Root directory
-    app.use('/js', express.static(path.join(__dirname, '..', 'js'))); // JS directory
-    app.use('/css', express.static(path.join(__dirname, '..', 'css'))); // CSS directory
-    app.use('/assets', express.static(path.join(__dirname, '..', 'assets'))); // Assets directory if exists
+    // Serve custom fonts and manifest before root static
+    app.use('/fonts', express.static(path.join(__dirname, '..', 'public', 'fonts')));
+
+    // Serve static files from root directory
+    app.use(express.static(path.join(__dirname, '..')));
+    app.use('/js', express.static(path.join(__dirname, '..', 'js')));
+    app.use('/css', express.static(path.join(__dirname, '..', 'css')));
+    app.use('/assets', express.static(path.join(__dirname, '..', 'assets')));
 
     // health check endpoint
     app.get('/api/v1/health', (req, res) => {
@@ -110,7 +113,7 @@ const startServer = async () => {
 
     // For any other non-API routes, serve index.html (client-side routing)
     app.get('*', (req, res) => {
-      if (!req.path.startsWith('/api')) {
+      if (!req.path.startsWith('/api') && !req.path.startsWith('/fonts/')) {
         res.sendFile(path.join(__dirname, '..', 'index.html'));
       }
     });

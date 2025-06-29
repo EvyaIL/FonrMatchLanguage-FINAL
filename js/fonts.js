@@ -157,189 +157,34 @@ class FontManager {
             { name: 'Cousine', category: 'monospace', style: 'clean', weight: 'regular', popularity: 5 }
         ];
         
-        
-        // Comprehensive and accurate font pairings
-        this.fontPairings = {
-            // Modern Sans-Serif Pairings
-            'Inter': 'Heebo',
-            'Open Sans': 'Assistant',
-            'Roboto': 'Noto Sans Hebrew',
-            'Source Sans Pro': 'Heebo',
-            'Lato': 'Assistant',
-            'Nunito': 'Varela Round',
-            'Poppins': 'Rubik',
-            'Montserrat': 'Rubik',
-            'Outfit': 'Secular One',
-            'DM Sans': 'Alef',
-            'Plus Jakarta Sans': 'Heebo',
-            'Work Sans': 'Assistant',
-            'Lexend': 'Noto Sans Hebrew',
-            'Red Hat Display': 'Heebo',
-            'Manrope': 'Alef',
-            'Figtree': 'Rubik',
-            'Space Grotesk': 'Karantina',
-            'Epilogue': 'Secular One',
-            'Sora': 'IBM Plex Sans Hebrew',
-            'Be Vietnam Pro': 'Assistant',
-            
-            // Classic Sans-Serif Pairings
-            'Arial': 'Arial Hebrew',
-            'Helvetica': 'Arial Hebrew',
-            'Verdana': 'Gisha',
-            'Tahoma': 'Tahoma',
-            'Trebuchet MS': 'Assistant',
-            'Century Gothic': 'Calibri',
-            'Futura': 'Rubik',
-            'Gill Sans': 'Heebo',
-            'Franklin Gothic': 'Aharoni',
-            'Optima': 'Secular One',
-            
-            // Modern Serif Pairings
-            'Playfair Display': 'Frank Ruhl Libre',
-            'Source Serif Pro': 'Noto Serif Hebrew',
-            'Crimson Text': 'Frank Ruhl Libre',
-            'Libre Baskerville': 'David Libre',
-            'Cormorant Garamond': 'Frank Ruhl Libre',
-            'Lora': 'Noto Serif Hebrew',
-            'Literata': 'David Libre',
-            'Spectral': 'Noto Serif Hebrew',
-            'Bitter': 'David Libre',
-            'Zilla Slab': 'Suez One',
-            'Crete Round': 'David Libre',
-            'Arvo': 'David Libre',
-            
-            // Classic Serif Pairings
-            'Times New Roman': 'Times New Roman',
-            'Georgia': 'David Libre',
-            'Merriweather': 'Noto Serif Hebrew',
-            'Garamond': 'Frank Ruhl Libre',
-            'Baskerville': 'David Libre',
-            'Caslon': 'Narkisim',
-            'Minion Pro': 'Frank Ruhl Libre',
-            'Sabon': 'David Libre',
-            'Palatino': 'Frank Ruhl Libre',
-            'Book Antiqua': 'David Libre',
-            
-            // Monospace Pairings
-            'JetBrains Mono': 'Cousine',
-            'Fira Code': 'DejaVu Sans Mono',
-            'Source Code Pro': 'Liberation Mono',
-            'Roboto Mono': 'Cousine',
-            'Courier New': 'Courier New',
-            'Monaco': 'Consolas',
-            'Consolas': 'Consolas',
-            'Menlo': 'Liberation Mono',
-            'Inconsolata': 'DejaVu Sans Mono',
-            'SF Mono': 'Cousine',
-            
-            // Display & Decorative Pairings
-            'Oswald': 'Aharoni',
-            'Bebas Neue': 'Rubik Mono One',
-            'Abril Fatface': 'Suez One',
-            'Fjalla One': 'Aharoni',
-            'Anton': 'Ozrad CLM',
-            'Righteous': 'Gan CLM',
-            'Bangers': 'Haim',
-            'Pacifico': 'Shofar',
-            'Dancing Script': 'Almoni Neue',
-            'Great Vibes': 'Bellefair',
-            
-            // Hebrew to English mappings (reverse pairings)
-            'Heebo': 'Inter',
-            'Assistant': 'Open Sans',
-            'Rubik': 'Montserrat',
-            'Noto Sans Hebrew': 'Roboto',
-            'Alef': 'DM Sans',
-            'Secular One': 'Outfit',
-            'Varela Round': 'Nunito',
-            'M PLUS Rounded 1c': 'Nunito',
-            'IBM Plex Sans Hebrew': 'Sora',
-            'Karantina': 'Space Grotesk',
-            'Suez One': 'Zilla Slab',
-            'Bellefair': 'Great Vibes',
-            
-            // Classic Hebrew Sans-Serif
-            'Arial Hebrew': 'Arial',
-            'Tahoma': 'Tahoma',
-            'Verdana': 'Verdana',
-            'Calibri': 'Century Gothic',
-            'Miriam': 'Tahoma',
-            'Gisha': 'Verdana',
-            'Segoe UI': 'Arial',
-            'Leelawadee UI': 'Open Sans',
-            'Aharoni': 'Franklin Gothic',
-            'Levenim MT': 'Tahoma',
-            
-            // Hebrew Serif
-            'Frank Ruhl Libre': 'Playfair Display',
-            'Noto Serif Hebrew': 'Merriweather',
-            'David Libre': 'Georgia',
-            'Hadassah Friedlaender': 'Baskerville',
-            'Keter YG': 'Garamond',
-            'SIL Ezra': 'Crimson Text',
-            'Cardo': 'Libre Baskerville',
-            'Titus Cyberbit Basic': 'Times New Roman',
-            
-            // Traditional Hebrew
-            'Times New Roman': 'Times New Roman',
-            'David': 'Georgia',
-            'Narkisim': 'Caslon',
-            'Rod': 'Book Antiqua',
-            'Drugulin': 'Garamond',
-            'Carmel': 'Palatino',
-            'Hadasim': 'Minion Pro',
-            
-            // Hebrew Monospace
-            'Cousine': 'JetBrains Mono',
-            'DejaVu Sans Mono': 'Fira Code',
-            'Liberation Mono': 'Source Code Pro',
-            'Courier New': 'Courier New',
-            'Consolas': 'Consolas',
-            'Lucida Console': 'Monaco',
-            
-            // Decorative Hebrew
-            'Almoni Neue': 'Dancing Script',
-            'Gan CLM': 'Righteous',
-            'Ozrad CLM': 'Anton',
-            'Haim': 'Bangers',
-            'Shofar': 'Pacifico',
-            'Rubik Mono One': 'Bebas Neue',
-            'Arimo': 'Work Sans',
-            'Tinos': 'Lora'
-        };
-        
-        // Enhanced sample texts for better font demonstration
-        this.sampleTexts = {
-            'en': "The quick brown fox jumps over the lazy dog. 0123456789",
-            'he': "אבגד הוזח טיכל מנסע פצקר שתץ. 0123456789"
-        };
-        
-        // Extended sample texts for comprehensive showcase
-        this.extendedSampleTexts = {
-            'en': "The quick brown fox jumps over the lazy dog. Pack my box with five dozen liquor jugs. ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz 0123456789 !@#$%^&*()",
-            'he': "אבגד הוזח טיכל מנסע פצקר שתץ. דג סקרן שט בים מאוכזב ולפתע מצא לו חברה איך נראית הכתיבה בעברית. אבגדהוזחטיכלמנסעפצקרשתךםןףץ 0123456789 !@#$%^&*()"
-        };
-        
-        // Professional sample texts for different use cases
-        this.professionalSampleTexts = {
-            'en': {
-                'heading': "Welcome to Our Platform",
-                'subheading': "Discover Amazing Typography",
-                'body': "Typography is the art and technique of arranging type to make written language legible, readable and appealing when displayed. The arrangement of type involves selecting typefaces, point sizes, line lengths, line-spacing, and letter-spacing, and adjusting the space between pairs of letters.",
-                'small': "© 2024 Font Matching Platform. All rights reserved."
-            },
-            'he': {
-                'heading': "ברוכים הבאים לפלטפורמה שלנו",
-                'subheading': "גלו טיפוגרפיה מדהימה",
-                'body': "טיפוגרפיה היא האמנות והטכניקה של סידור אותיות כדי להפוך שפה כתובה לברורה, קריאה ומושכת כשהיא מוצגת. סידור האותיות כולל בחירת גופנים, גדלי נקודות, אורכי שורות, מרווחי שורות ומרווחי אותיות.",
-                'small': "© 2024 פלטפורמת התאמת גופנים. כל הזכויות שמורות."
-            }
-        };
+        // Custom fonts loaded from manifest
+        this.customFonts = [];
         
         // Font feature vectors (for AI simulation)
         this.fontVectors = {};
         
-        // Generate vectors for all fonts
+        // Initialize font pairings (static or dynamic mappings)
+        this.fontPairings = {};
+        
+        // Sample texts for UI previews
+        this.sampleTexts = {
+            en: 'Sample text in English',
+            he: 'טקסט לדוגמה בעברית'
+        };
+        
+        // Extended sample texts (e.g., pangrams) for showcase
+        this.extendedSampleTexts = {
+            en: 'The quick brown fox jumps over the lazy dog.',
+            he: 'דג סקרן שט בים כל הבא כיווץ'
+        };
+        
+        // Professional sample texts placeholder
+        this.professionalSampleTexts = {
+            en: {},
+            he: {}
+        };
+        
+        // Generate vectors for all statically defined fonts
         [...this.englishFonts, ...this.hebrewFonts].forEach(font => {
             this.fontVectors[font.name] = this.generateFontVector(font);
         });
@@ -351,29 +196,31 @@ class FontManager {
     // Fetch custom font manifest and register fonts dynamically
     async loadCustomFonts() {
         try {
+            // Clear any previously loaded custom fonts
+            this.customFonts = [];
+            // Fetch the custom fonts manifest
             const response = await fetch('/fonts/fonts.json');
-            if (!response.ok) return;
+            if (!response.ok) {
+                console.error(`Failed to fetch fonts manifest: status ${response.status}`);
+                return;
+            }
             const manifest = await response.json();
             const fontFaceRules = [];
             manifest.forEach(entry => {
                 const fontName = entry.name;
+                // Use served fonts path
                 const filePath = `/fonts/${entry.file}`;
-                // Add to Hebrew fonts list
-                this.hebrewFonts.push({
+                const fontObj = {
                     name: fontName,
                     category: 'sans-serif',
                     style: 'unknown',
                     weight: 'regular',
                     popularity: 1
-                });
+                };
+                // Add to customFonts list
+                this.customFonts.push(fontObj);
                 // Generate font vector
-                this.fontVectors[fontName] = this.generateFontVector({
-                    name: fontName,
-                    category: 'sans-serif',
-                    style: 'unknown',
-                    weight: 'regular',
-                    popularity: 1
-                });
+                this.fontVectors[fontName] = this.generateFontVector(fontObj);
                 // Create @font-face rule
                 fontFaceRules.push(`@font-face { font-family: "${fontName}"; src: url('${filePath}') format('${filePath.endsWith('.woff2') ? 'woff2' : filePath.endsWith('.woff') ? 'woff' : filePath.endsWith('.otf') ? 'opentype' : 'truetype'}'); font-weight: normal; font-style: normal; }`);
             });
@@ -383,11 +230,10 @@ class FontManager {
             styleEl.textContent = fontFaceRules.join('\n');
             document.head.appendChild(styleEl);
             console.log(`Loaded ${manifest.length} custom fonts from manifest.`);
-            // Notify UI to refresh font selectors
-            document.dispatchEvent(new CustomEvent('fonts-loaded', { detail: { count: manifest.length } }));
-        } catch (e) {
-            console.error('Error loading custom fonts manifest:', e);
-        }
+            console.log(`CustomFonts count: ${this.customFonts.length}`);
+         } catch (e) {
+             console.error('Error loading custom fonts manifest:', e);
+         }
     }
 
     // Generate a simulated feature vector for a font based on its characteristics
