@@ -339,9 +339,13 @@
                 if (user) {
                     authButtons.style.display = 'none';
                     userMenu.style.display = 'flex';
-                    usernameEl.textContent = user.name || user.email.split('@')[0];
-                    if (user.avatar) {
-                        userAvatar.innerHTML = `<img src="${user.avatar}" alt="User Avatar">`;
+                    
+                    // Use displayName or username, not email
+                    usernameEl.textContent = user.name || user.displayName || user.username || user.email.split('@')[0];
+                    
+                    // Use user.picture for profile image
+                    if (user.picture) {
+                        userAvatar.innerHTML = `<img src="${user.picture}" alt="User Avatar" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">`;
                     } else {
                         userAvatar.innerHTML = `<i class="fas fa-user"></i>`;
                     }
@@ -350,6 +354,37 @@
                     userMenu.style.display = 'none';
                 }
             }
+
+            // Handle user menu dropdown toggle
+            const userMenuToggle = userMenu.querySelector('.user-avatar, .username, .fa-chevron-down');
+            const dropdownMenu = userMenu.querySelector('.dropdown-menu');
+            
+            // Add click handler to user menu to toggle dropdown
+            userMenu.addEventListener('click', (e) => {
+                e.stopPropagation();
+                dropdownMenu.classList.toggle('show');
+            });
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!userMenu.contains(e.target)) {
+                    dropdownMenu.classList.remove('show');
+                }
+            });
+
+            // Handle dropdown menu clicks
+            const dropdownItems = userMenu.querySelectorAll('.dropdown-item');
+            dropdownItems.forEach(item => {
+                if (item.id !== 'logout-btn') {
+                    item.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const href = item.getAttribute('href');
+                        if (href && href !== '#') {
+                            window.location.href = href;
+                        }
+                    });
+                }
+            });
 
             const logoutBtn = document.getElementById('logout-btn');
             if (logoutBtn) {
