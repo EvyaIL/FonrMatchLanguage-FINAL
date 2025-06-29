@@ -345,8 +345,54 @@ class FontManager {
         });
         
         this.preloadFonts();
+        // Load additional fonts from manifest (e.g., local Hebrew fonts)
+        if (window.fetch) {
+            this.loadCustomFonts();
+        }
     }
-    
+
+    // Fetch custom font manifest and register fonts dynamically
+    async loadCustomFonts() {
+        try {
+            const response = await fetch('/fonts/fonts.json');
+            if (!response.ok) return;
+            const manifest = await response.json();
+            const fontFaceRules = [];
+            manifest.forEach(entry => {
+                const fontName = entry.name;
+                const filePath = `/fonts/${entry.file}`;
+                // Add to Hebrew fonts list
+                this.hebrewFonts.push({
+                    name: fontName,
+                    category: 'sans-serif',
+                    style: 'unknown',
+                    weight: 'regular',
+                    popularity: 1
+                });
+                // Generate font vector
+                this.fontVectors[fontName] = this.generateFontVector({
+                    name: fontName,
+                    category: 'sans-serif',
+                    style: 'unknown',
+                    weight: 'regular',
+                    popularity: 1
+                });
+                // Create @font-face rule
+                fontFaceRules.push(`@font-face { font-family: "${fontName}"; src: url('${filePath}') format('${filePath.endsWith('.woff2') ? 'woff2' : filePath.endsWith('.woff') ? 'woff' : filePath.endsWith('.otf') ? 'opentype' : 'truetype'}'); font-weight: normal; font-style: normal; }`);
+            });
+            // Inject styles
+            const styleEl = document.createElement('style');
+            styleEl.setAttribute('data-font-manifest', '');
+            styleEl.textContent = fontFaceRules.join('\n');
+            document.head.appendChild(styleEl);
+            console.log(`Loaded ${manifest.length} custom fonts from manifest.`);
+            // Notify UI to refresh font selectors
+            document.dispatchEvent(new CustomEvent('fonts-loaded', { detail: { count: manifest.length } }));
+        } catch (e) {
+            console.error('Error loading custom fonts manifest:', e);
+        }
+    }
+
     // Generate a simulated feature vector for a font based on its characteristics
     generateFontVector(font) {
         // This is a simplified approach - in a real ML system this would be based on actual font analysis

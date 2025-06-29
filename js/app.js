@@ -182,24 +182,30 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function updateFontOptions() {
-        const lang = sourceLanguage.value;
-        
+        // Load all fonts (both English and Hebrew) into the selector
+        const allFonts = [...fontManager.englishFonts, ...fontManager.hebrewFonts];
+
         // Clear existing options
         sourceFont.innerHTML = '';
-        
-        // Add font options for selected language
-        const fonts = fontManager.getFontsForLanguage(lang);
+
+        // Add font options for all loaded fonts
+        const fonts = allFonts;
+        // Remove duplicate names
+        const seen = new Set();
         fonts.forEach(font => {
-            const option = document.createElement('option');
-            option.value = font.name;
-            option.textContent = font.name;
-            option.style.fontFamily = font.name;
-            sourceFont.appendChild(option);
-        });
-        
-        // Set initial preview
-        if (fonts.length > 0) {
-            previewFont(fonts[0].name, sourceText);
+            if (seen.has(font.name)) return;
+            seen.add(font.name);
+             const option = document.createElement('option');
+             option.value = font.name;
+             option.textContent = font.name;
+             option.style.fontFamily = font.name;
+             sourceFont.appendChild(option);
+         });
+
+        // Set initial preview with first font
+        if (seen.size > 0) {
+            const firstFont = Array.from(seen)[0];
+            previewFont(firstFont, sourceText);
         }
     }
 
@@ -495,4 +501,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         return element;
     }
+    
+    // Re-populate font options if new fonts are loaded
+    document.addEventListener('fonts-loaded', () => {
+        updateFontOptions();
+        console.log('Font options updated after loading custom fonts.');
+    });
 });
