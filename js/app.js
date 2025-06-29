@@ -38,6 +38,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Initialize the page
     // Load custom fonts first, then initialize
     if (fontManager.loadCustomFonts) {
+        // When fonts manifest is loaded, refresh the font options
+        document.addEventListener('fonts-loaded', updateFontOptions);
         await fontManager.loadCustomFonts();
     }
     init();
@@ -262,29 +264,34 @@ document.addEventListener('DOMContentLoaded', async function() {
         // Simulate AI processing time
         setTimeout(() => {
             try {
-                // Find matching font using our "AI"
-                const matchedFont = fontManager.findMatchingFont(selectedFont, targetLang);
-                
-                console.log('Matched font:', matchedFont);
-                
-                // Update display
+                // Get top 3 matching fonts (primary + 2 alternatives)
+                const matches = fontManager.getMatchingFonts(selectedFont, targetLang, 3);
+                // matches is an array of font name strings
+                const matchedFont = matches.length > 0 ? matches[0] : null;
+                const alternatives = matches.slice(1);
+
+                console.log('Matched font:', matchedFont, 'Alternatives:', alternatives);
+
+                // Update display name
                 if (fontName) {
                     fontName.textContent = matchedFont || 'No match found';
                 }
-                
+
+                // Apply primary matched font
                 if (targetText && matchedFont) {
                     targetText.style.fontFamily = matchedFont;
                 }
-                
-                // Display visual comparison
+
+                // Display visual comparison with alternatives
                 if (matchedFont) {
                     uiManager.displayMatchResult(
-                        selectedFont, 
-                        matchedFont, 
-                        inputText, 
+                        selectedFont,
+                        matchedFont,
+                        inputText,
                         targetInputText,
                         sourceLang,
-                        targetLang
+                        targetLang,
+                        alternatives
                     );
                     
                     // Save match if user is logged in

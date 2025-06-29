@@ -356,6 +356,49 @@ class FontManager {
         return candidates.length > 0 ? candidates[0].name : this.getDefaultFont(targetLang);
     }
     
+    // Get top matching fonts (primary + alternatives)
+    getMatchingFonts(sourceFont, targetLang, limit = 3) {
+         // Gather candidates with similarity scores
+         const sourceVec = this.fontVectors[sourceFont];
+         const allTargets = targetLang === 'en' ? this.englishFonts : this.hebrewFonts;
+         const candidates = [];
+         allTargets.forEach(font => {
+             const vec = this.fontVectors[font.name];
+             if (!vec || !sourceVec) return;
+             let sim = this.calculateSimilarity(sourceVec, vec);
+             // Apply bonuses
+             const srcInfo = this.getFontInfo(sourceFont);
+             if (srcInfo && font.category === srcInfo.category) sim += 0.2;
+             if (srcInfo && font.style === srcInfo.style) sim += 0.15;
+             sim += (font.popularity || 5) * 0.01;
+             candidates.push({ name: font.name, score: sim });
+         });
+        // Sort by score descending
+        candidates.sort((a, b) => b.score - a.score);
+        // Prioritize same category/style
+        const srcInfo = this.getFontInfo(sourceFont) || {};
+        const categoryMatches = [];
+        const styleMatches = [];
+        const otherMatches = [];
+        candidates.forEach(c => {
+            const tgtInfo = this.getFontInfo(c.name) || {};
+            if (tgtInfo.category === srcInfo.category) {
+                categoryMatches.push(c);
+            } else if (tgtInfo.style === srcInfo.style) {
+                styleMatches.push(c);
+            } else {
+                otherMatches.push(c);
+            }
+        });
+        const ordered = [...categoryMatches, ...styleMatches, ...otherMatches];
+        // Fallback: if no matches found, return default font
+        if (ordered.length === 0) {
+            return [this.getDefaultFont(targetLang)];
+        }
+        // Return top 'limit' matches by name
+        return ordered.slice(0, limit).map(item => item.name);
+     }
+
     // Get font information by name
     getFontInfo(fontName) {
         const allFonts = [...this.englishFonts, ...this.hebrewFonts];
