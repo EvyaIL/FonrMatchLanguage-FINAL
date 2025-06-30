@@ -45,8 +45,8 @@ module.exports = function() {
   
   // GitHub Strategy
   passport.use(new GitHubStrategy({
-    clientID: process.env.GITHUB_CLIENT_ID,
-    clientSecret: process.env.GITHUB_CLIENT_SECRET,
+    clientID: process.env.CLIENT_ID_GITHUB,
+    clientSecret: process.env.CLIENT_SECRET_GITHUB,
     callbackURL: "/api/v1/auth/github/callback",
     scope: ['user:email']
   }, async (accessToken, refreshToken, profile, done) => {
