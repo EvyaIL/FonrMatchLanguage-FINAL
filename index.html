@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google-site-verification" content="zaGhu6PsG69KXb93e1FxqQOcHlA7Coql19Zp_S4Mos0" />
     <meta name="description" content="Find matching fonts between Hebrew and English using AI technology. Create harmonious typography for multilingual designs.">
     <title>Font Match | Match fonts between languages</title>
     <link rel="stylesheet" href="css/style.css">
@@ -11,10 +12,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Heebo:wght@300;400;500;700&family=Open+Sans:wght@300;400;600&family=Rubik:wght@300;400;500;600&family=Assistant:wght@300;400;600&family=Frank+Ruhl+Libre:wght@300;400;500;700&family=Montserrat:wght@300;400;500;600&family=Playfair+Display:wght@400;500;600&family=Merriweather:wght@300;400;700&family=Noto+Sans+Hebrew:wght@300;400;500;700&family=Noto+Serif+Hebrew:wght@300;400;600;700&family=David+Libre:wght@400;500;700&family=Arimo:wght@400;500;600;700&family=Secular+One&family=Suez+One&display=swap" rel="stylesheet">
-    <!-- Favicon -->
     <link rel="icon" href="favicon.ico" type="image/x-icon">
-    <link rel="icon" href="favicon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="favicon.svg">
 </head>
 <body class="light-mode">
     <header>
@@ -127,11 +125,9 @@
                             <option value="en">English</option>
                             <option value="he">עברית</option>
                         </select>
-                        <!-- Searchable font input -->
-                        <input type="text" id="source-font-input" list="source-font-list" placeholder="Search fonts..." autocomplete="off" />
-                        <datalist id="source-font-list">
-                            <!-- populated dynamically -->
-                        </datalist>
+                        <select id="source-font">
+                            <!-- Fonts will be populated by JavaScript -->
+                        </select>
                     </div>
                     <textarea id="source-text" placeholder="Enter text here"></textarea>
                 </div>
@@ -323,6 +319,7 @@
         </div>
     </template>
 
+    <script src="js/seo.js"></script>
     <script src="js/fonts.js"></script>
     <script src="js/translation.js"></script>
     <script src="js/mock-server.js"></script>

@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', async function() {
+document.addEventListener('DOMContentLoaded', function() {
     // Initialize managers - check if they exist globally first
     const fontManager = window.fontManager || new FontManager();
     const uiManager = window.uiManager || new UIManager();
@@ -16,10 +16,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     const heBtn = document.getElementById('he-btn');
     const sourceLanguage = document.getElementById('source-language');
     const targetLanguage = document.getElementById('target-language');
-    const sourceFontInput = document.getElementById('source-font-input');
-    const sourceFontList = document.getElementById('source-font-list');
+    const sourceFont = document.getElementById('source-font');
     const sourceText = document.getElementById('source-text');
-    const targetText = document.getElementById('target-text');
+    const outputText = document.getElementById('output-text');
     const matchButton = document.getElementById('match-button');
     const swapButton = document.getElementById('swap-languages');
     const fontName = document.getElementById('font-name');
@@ -27,21 +26,16 @@ document.addEventListener('DOMContentLoaded', async function() {
     const aboutButton = document.getElementById('about-button');
     const closeModalButtons = document.querySelectorAll('.close-modal');
     const aboutModal = document.getElementById('about-modal');
+    const targetText = document.getElementById('target-text');
     const fontComparisonDisplay = document.getElementById('font-comparison-display');
     
     // Check for missing critical elements
-    if (!sourceLanguage || !targetLanguage || !sourceFontInput || !sourceFontList || !sourceText || !matchButton) {
+    if (!sourceLanguage || !targetLanguage || !sourceFont || !sourceText || !matchButton) {
         console.error('Critical DOM elements missing for font matching');
         return;
     }
     
     // Initialize the page
-    // Load custom fonts first, then initialize
-    if (fontManager.loadCustomFonts) {
-        // When fonts manifest is loaded, refresh the font options
-        document.addEventListener('fonts-loaded', updateFontOptions);
-        await fontManager.loadCustomFonts();
-    }
     init();
 
     function init() {
@@ -55,7 +49,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             themeSwitch.checked = true;
         }
         
-        // Populate font dropdown with all loaded fonts
+        // Populate font dropdown
         updateFontOptions();
         
         // Set event listeners
@@ -135,8 +129,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         });
         
         // Font selection preview
-        if (sourceFontInput) {
-            sourceFontInput.addEventListener('input', function() {
+        if (sourceFont) {
+            sourceFont.addEventListener('change', function() {
                 previewFont(this.value, sourceText);
             });
         }
@@ -188,27 +182,24 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     function updateFontOptions() {
-        // Populate all fonts (English + Hebrew + custom) in the datalist
-        sourceFontList.innerHTML = '';
-        const allFonts = [
-            ...fontManager.englishFonts,
-            ...fontManager.hebrewFonts,
-            ...(fontManager.customFonts || [])
-        ];
-        const uniqueNames = [...new Set(allFonts.map(f => f.name))].sort((a, b) => a.localeCompare(b));
-        uniqueNames.forEach(name => {
+        const lang = sourceLanguage.value;
+        
+        // Clear existing options
+        sourceFont.innerHTML = '';
+        
+        // Add font options for selected language
+        const fonts = fontManager.getFontsForLanguage(lang);
+        fonts.forEach(font => {
             const option = document.createElement('option');
-            option.value = name;
-            sourceFontList.appendChild(option);
+            option.value = font.name;
+            option.textContent = font.name;
+            option.style.fontFamily = font.name;
+            sourceFont.appendChild(option);
         });
-        // Update placeholder with count
-        if (sourceFontInput) {
-            sourceFontInput.placeholder = `Search fonts (${uniqueNames.length} available)...`;
-        }
-        // Set initial input value and preview if empty
-        if (!sourceFontInput.value && uniqueNames.length) {
-            sourceFontInput.value = uniqueNames[0];
-            previewFont(uniqueNames[0], sourceText);
+        
+        // Set initial preview
+        if (fonts.length > 0) {
+            previewFont(fonts[0].name, sourceText);
         }
     }
 
@@ -217,10 +208,10 @@ document.addEventListener('DOMContentLoaded', async function() {
         sourceLanguage.value = targetLanguage.value;
         targetLanguage.value = tempLang;
         
-        // Swap textarea values
+        // Swap text content
         const tempText = sourceText.value;
-        sourceText.value = targetText.value || '';
-        targetText.value = tempText;
+        sourceText.value = outputText.textContent || '';
+        outputText.textContent = tempText;
         
         updateFontOptions();
     }
@@ -240,7 +231,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     function findMatchingFont() {
         const sourceLang = sourceLanguage.value;
         const targetLang = targetLanguage.value;
-        const selectedFont = sourceFontInput.value;
+        const selectedFont = sourceFont.value;
         const inputText = sourceText.value || getDefaultText(sourceLang);
         const targetInputText = targetText.value || getDefaultText(targetLang);
         
@@ -264,34 +255,29 @@ document.addEventListener('DOMContentLoaded', async function() {
         // Simulate AI processing time
         setTimeout(() => {
             try {
-                // Get top 3 matching fonts (primary + 2 alternatives)
-                const matches = fontManager.getMatchingFonts(selectedFont, targetLang, 3);
-                // matches is an array of font name strings
-                const matchedFont = matches.length > 0 ? matches[0] : null;
-                const alternatives = matches.slice(1);
-
-                console.log('Matched font:', matchedFont, 'Alternatives:', alternatives);
-
-                // Update display name
+                // Find matching font using our "AI"
+                const matchedFont = fontManager.findMatchingFont(selectedFont, targetLang);
+                
+                console.log('Matched font:', matchedFont);
+                
+                // Update display
                 if (fontName) {
                     fontName.textContent = matchedFont || 'No match found';
                 }
-
-                // Apply primary matched font
-                if (targetText && matchedFont) {
-                    targetText.style.fontFamily = matchedFont;
+                
+                if (outputText && matchedFont) {
+                    outputText.style.fontFamily = matchedFont;
                 }
-
-                // Display visual comparison with alternatives
+                
+                // Display visual comparison
                 if (matchedFont) {
-                    uiManager.displayMatchResult(
-                        selectedFont,
-                        matchedFont,
-                        inputText,
+                    displayFontComparison(
+                        selectedFont, 
+                        matchedFont, 
+                        inputText, 
                         targetInputText,
                         sourceLang,
-                        targetLang,
-                        alternatives
+                        targetLang
                     );
                     
                     // Save match if user is logged in
@@ -303,7 +289,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                             targetFont: matchedFont,
                             sourceText: inputText,
                             targetText: targetInputText,
-                            matchScore: uiManager.calculateMatchScore(selectedFont, matchedFont)
+                            matchScore: calculateMatchScore(selectedFont, matchedFont)
                         };
                         
                         saveFontMatch(matchData);

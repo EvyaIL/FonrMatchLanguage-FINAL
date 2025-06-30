@@ -7,15 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Listen for auth-change to get user data
     document.addEventListener('auth-change', (e) => {
         currentUser = e.detail.user;
-        console.log('Dashboard received auth-change event with user:', currentUser);
         if (currentUser) {
-            console.log('User properties:', {
-                name: currentUser.name,
-                displayName: currentUser.displayName,
-                username: currentUser.username,
-                email: currentUser.email,
-                picture: currentUser.picture
-            });
             populateUserData(currentUser);
             // Once user is available, we can fetch their data
             fetchAndDisplayFontMatches(); 
@@ -122,12 +114,7 @@ function loadTabContent(tabId) {
 }
 
 function populateUserData(user) {
-    if (!user) {
-        console.warn('No user data provided to populateUserData');
-        return;
-    }
-
-    console.log('Populating user data:', user);
+    if (!user) return;
 
     // --- Sidebar Profile Elements ---
     const profileNameEl = document.getElementById('profile-name');
@@ -143,55 +130,35 @@ function populateUserData(user) {
     const settingsUsernameEl = document.getElementById('username-setting');
     const settingsEmailEl = document.getElementById('email-setting');
 
-    // Determine the user's display name with fallback priority
-    const displayName = user.name || user.displayName || user.username || user.email?.split('@')[0] || 'User';
-    
-    console.log('Using display name:', displayName);
-
     // --- Populate Sidebar ---
     if (profileNameEl) {
-        profileNameEl.textContent = displayName;
-        console.log('Set profile name to:', displayName);
-    } else {
-        console.warn('Profile name element not found');
+        profileNameEl.textContent = user.name || 'User';
     }
-    
     if (profileEmailEl) {
         profileEmailEl.textContent = user.email || 'No email provided';
-        console.log('Set profile email to:', user.email);
-    } else {
-        console.warn('Profile email element not found');
     }
-    
     if (profileAvatarImgEl) {
         profileAvatarImgEl.src = user.picture || 'https://via.placeholder.com/80';
         profileAvatarImgEl.onerror = () => { 
             profileAvatarImgEl.src = 'https://via.placeholder.com/80'; 
             console.warn('Failed to load user profile image from:', user.picture);
         };
-        console.log('Set profile avatar to:', user.picture || 'placeholder');
-    } else {
-        console.warn('Profile avatar element not found');
     }
 
     // --- Populate Overview Tab ---
     if (overviewWelcomeEn) {
-        overviewWelcomeEn.textContent = `Welcome back, ${displayName}! Here's a summary of your activity.`;
+        overviewWelcomeEn.textContent = `Welcome back, ${user.name || 'User'}! Here's a summary of your activity.`;
     }
     if (overviewWelcomeHe) {
-        overviewWelcomeHe.textContent = `ברוך שובך, ${displayName}! הנה סיכום הפעילות שלך.`;
+        overviewWelcomeHe.textContent = `ברוך שובך, ${user.name || 'משתמש'}! הנה סיכום הפעילות שלך.`;
     }
     if (memberSinceEl && user.createdAt) {
-        const memberSince = new Date(user.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long' });
-        memberSinceEl.textContent = memberSince;
-        console.log('Set member since to:', memberSince);
-    } else if (memberSinceEl) {
-        memberSinceEl.textContent = 'June 2025'; // Fallback
+        memberSinceEl.textContent = new Date(user.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long' });
     }
 
     // --- Populate Settings Tab ---
     if (settingsUsernameEl) {
-        settingsUsernameEl.value = displayName;
+        settingsUsernameEl.value = user.name || '';
     }
     if (settingsEmailEl) {
         settingsEmailEl.value = user.email || '';
@@ -395,22 +362,13 @@ async function updateFavoritesCount() {
 }
 
 function renderSettingsTab() {
-    if (!currentUser) {
-        console.warn('No current user data available for settings tab');
-        return;
-    }
-
-    // Use the same display name logic as populateUserData
-    const displayName = currentUser.name || currentUser.displayName || currentUser.username || currentUser.email?.split('@')[0] || 'User';
-    const email = currentUser.email || 'No email provided';
-
     const settingsContent = document.getElementById('settings');
     settingsContent.innerHTML = `
         <h2>Settings</h2>
         <div class="settings-section">
             <h3>Profile</h3>
-            <p><strong>Name:</strong> ${displayName}</p>
-            <p><strong>Email:</strong> ${email}</p>
+            <p><strong>Name:</strong> ${currentUser.name}</p>
+            <p><strong>Email:</strong> ${currentUser.email}</p>
         </div>
         <div class="settings-section">
             <h3>Theme</h3>

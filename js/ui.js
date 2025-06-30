@@ -55,13 +55,13 @@ class UIManager {
         return previewEl;
     }
     
-    // Display the matching fonts result with improved readability, including alternatives
-    displayMatchResult(sourceFont, targetFont, sourceText, targetText, sourceLang, targetLang, alternatives = []) {
-         // Create comparison HTML
-         const matchScore = this.calculateMatchScore(sourceFont, targetFont);
-         
-         // Build HTML for the font comparison display
-         let comparisonHTML = `
+    // Display the matching fonts result with improved readability
+    displayMatchResult(sourceFont, targetFont, sourceText, targetText, sourceLang, targetLang) {
+        // Create comparison HTML
+        const matchScore = this.calculateMatchScore(sourceFont, targetFont);
+        
+        // Build HTML for the font comparison display
+        const comparisonHTML = `
             <h2 class="comparison-title">
                 <span class="en">Font Comparison</span>
                 <span class="he">השוואת גופנים</span>
@@ -84,12 +84,12 @@ class UIManager {
                     </div>
                 </div>
                 
-                <div class="font-card" id="target-font-card">
+                <div class="font-card">
                     <div class="font-card-header">
                         <div class="font-card-name">${targetFont}</div>
                         <div class="font-card-language">${targetLang === 'en' ? 'English' : 'עברית'}</div>
                     </div>
-                    <div class="font-card-text" id="target-font-text" style="font-family: '${targetFont}'">
+                    <div class="font-card-text" style="font-family: '${targetFont}'">
                         ${targetText || fontManager.getSampleText(targetLang)}
                     </div>
                 </div>
@@ -99,73 +99,21 @@ class UIManager {
                 <h3>${sourceLang === 'en' ? 'Why These Fonts Match' : 'למה הגופנים האלה מתאימים'}</h3>
                 <p>${this.getMatchExplanation(sourceFont, targetFont, sourceLang)}</p>
             </div>
-         `;
-         
-        // Add alternatives section with sample previews
-        if (alternatives.length > 1) {
-            comparisonHTML += `
-                <div class="alternative-section">
-                    <h3 class="en">Other Matches:</h3>
-                    <h3 class="he">התאמות נוספות:</h3>
-                    <div class="alternative-list">
-                        ${alternatives.map(font => `
-                            <div class="alt-item">
-                                <button class="alt-font-btn" data-font="${font}">${font}</button>
-                                <div class="alt-sample" style="font-family:'${font}'">
-                                    ${fontManager.getSampleText(targetLang)}
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
-        }
-         
-         // Add to font comparison display
-         const fontComparisonDisplay = document.getElementById('font-comparison-display');
-         fontComparisonDisplay.innerHTML = comparisonHTML;
-         fontComparisonDisplay.classList.add('active');
-         
-         // Add event listener for favorite button
-         const saveFavoriteBtn = document.getElementById('save-favorite-btn');
-         if (saveFavoriteBtn) {
-             saveFavoriteBtn.addEventListener('click', () => {
-                 const isFavorited = saveFavoriteBtn.classList.toggle('favorited');
-                 saveFavoriteBtn.setAttribute('aria-pressed', isFavorited);
-                 
-                 // Show snackbar notification
-                 const snackbar = document.getElementById('snackbar');
-                 snackbar.classList.add('show');
-                 snackbar.textContent = isFavorited ? 
-                     'Font pair saved as favorite!' : 
-                     'Font pair removed from favorites.';
-                 
-                 // Hide snackbar after 3 seconds
-                 setTimeout(() => {
-                     snackbar.classList.remove('show');
-                 }, 3000);
-             });
-         }
-         
-         // Add listeners for alternative font buttons
-         document.querySelectorAll('.alt-font-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const altFont = btn.getAttribute('data-font');
-                // Update primary match display
-                document.getElementById('font-name').textContent = altFont;
-                // Update comparison target card
-                const card = fontComparisonDisplay.querySelector('#target-font-card');
-                if (card) {
-                    card.querySelector('.font-card-name').textContent = altFont;
-                    const txt = card.querySelector('.font-card-text');
-                    txt.style.fontFamily = altFont;
-                    txt.textContent = targetText || fontManager.getSampleText(targetLang);
-                }
+        `;
+        
+        // Add to font comparison display
+        const fontComparisonDisplay = document.getElementById('font-comparison-display');
+        fontComparisonDisplay.innerHTML = comparisonHTML;
+        fontComparisonDisplay.classList.add('active');
+        
+        // Scroll to comparison after a short delay
+        setTimeout(() => {
+            fontComparisonDisplay.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'center' 
             });
-         });
-         // Scroll to comparison
-         fontComparisonDisplay.scrollIntoView({ behavior: 'smooth', block: 'center' });
-     }
+        }, 100);
+    }
     
     // Calculate match score with better accuracy
     calculateMatchScore(font1, font2) {
