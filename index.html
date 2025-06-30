@@ -347,7 +347,9 @@
                     
                     // Use user.picture for profile image
                     if (user.picture) {
-                        userAvatar.innerHTML = `<img src="${user.picture}" alt="User Avatar" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">`;
+                        // Remove Google's size parameter for better display
+                        const cleanPictureUrl = user.picture.replace(/=s\d+-c$/, '');
+                        userAvatar.innerHTML = `<img src="${cleanPictureUrl}" alt="User Avatar" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">`;
                     } else {
                         userAvatar.innerHTML = `<i class="fas fa-user"></i>`;
                     }

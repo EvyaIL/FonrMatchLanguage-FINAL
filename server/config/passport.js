@@ -20,6 +20,8 @@ module.exports = function() {
           displayName: profile.displayName,
           picture: profile.photos?.[0]?.value,
           googleId: profile.id,
+          socialLogin: true,
+          socialProvider: 'google'
       };
 
       if (user) {

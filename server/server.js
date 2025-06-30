@@ -46,7 +46,15 @@ const startServer = async () => {
     // Enable CORS with more permissive settings for development
     app.use(cors({
       origin: function(origin, callback) {
-        const allowedOrigins = ['http://localhost:5500', 'http://127.0.0.1:5500', 'http://localhost:3000', 'http://localhost'];
+        const allowedOrigins = [
+          'http://localhost:5500',
+          'http://127.0.0.1:5500',
+          'http://localhost:3000',
+          'http://localhost',
+          'https://www.font-match-language.tech',
+          'https://font-match-language.tech',
+          'https://evyail.github.io/FonrMatchLanguage-FINAL/'
+        ];
         // Allow requests with no origin (like mobile apps or curl requests)
         if (!origin) return callback(null, true);
         if (allowedOrigins.indexOf(origin) === -1) {
