@@ -1,0 +1,4 @@
+exclude:
+  - node_modules/
+  - server/node_modules/
+  - font-match-language/node_modules/
