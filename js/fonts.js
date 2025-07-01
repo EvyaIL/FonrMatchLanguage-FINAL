@@ -84,6 +84,17 @@ class FontManager {
         
         // Font feature vectors (for AI simulation)
         this.fontVectors = {};
+        // Matching configuration: adjustable weights and threshold for composite scoring
+        this.matchConfig = {
+            categoryWeight: 2,
+            styleWeight: 2,
+            weightWeight: 1,
+            similarityWeight: 1,
+            threshold: 1.5 // minimum score to accept composite match
+        };
+        // Cache for computed matches to improve performance
+        this.matchCache = {};
+        this.matchScoreCache = {}; // store raw scores for confidence calculation
         
         // Generate vectors for all fonts
         [...this.englishFonts, ...this.hebrewFonts].forEach(font => {
@@ -122,38 +133,70 @@ class FontManager {
 
     // Find matching font using simulated AI
     findMatchingFont(sourceFont, targetLang) {
+        const cacheKey = `${sourceFont}-${targetLang}`;
+        if (this.matchCache[cacheKey]) {
+            return this.matchCache[cacheKey];
+        }
         // If we have a direct pairing, use it
         if (this.fontPairings[sourceFont]) {
             const pairedFont = this.fontPairings[sourceFont];
             const targetFonts = targetLang === 'en' ? this.englishFonts : this.hebrewFonts;
-            
-            // Check if the paired font is available in the target language
             if (targetFonts.some(font => font.name === pairedFont)) {
+                // cache direct pairing with full confidence
+                this.matchCache[cacheKey] = pairedFont;
+                this.matchScoreCache[cacheKey] = this.matchConfig.categoryWeight + this.matchConfig.styleWeight + this.matchConfig.weightWeight + this.matchConfig.similarityWeight;
                 return pairedFont;
             }
         }
-        
-        // Otherwise use vector similarity (fallback)
-        const sourceVector = this.fontVectors[sourceFont];
-        if (!sourceVector) return null;
-        
-        const targetFonts = targetLang === 'en' ? this.englishFonts : this.hebrewFonts;
-        
+        // Composite attribute and vector similarity scoring (fallback)
+        // Determine inverse source set
+        const sourceLangFonts = targetLang === 'en' ? this.hebrewFonts : this.englishFonts;
+        const sourceFontObj = sourceLangFonts.find(f => f.name === sourceFont);
+        // Compute composite scores
         let bestMatch = null;
-        let highestSimilarity = -1;
-        
-        targetFonts.forEach(font => {
-            const targetVector = this.fontVectors[font.name];
-            if (!targetVector) return;
-            
-            const similarity = this.calculateSimilarity(sourceVector, targetVector);
-            
-            if (similarity > highestSimilarity) {
-                highestSimilarity = similarity;
-                bestMatch = font.name;
+        let bestScore = -Infinity;
+        targetFonts.forEach(f => {
+            let score = 0;
+            if (sourceFontObj) {
+                if (f.category === sourceFontObj.category) score += this.matchConfig.categoryWeight;
+                if (f.style === sourceFontObj.style) score += this.matchConfig.styleWeight;
+                if (f.weight === sourceFontObj.weight) score += this.matchConfig.weightWeight;
+            }
+            const vec = this.fontVectors[f.name];
+            if (vec) {
+                // clamp similarity to zero for negative values
+                const simRaw = this.calculateSimilarity(sourceVector, vec);
+                const sim = Math.max(0, simRaw) * this.matchConfig.similarityWeight;
+                score += sim;
+            }
+            if (score > bestScore) {
+                bestScore = score;
+                bestMatch = f.name;
             }
         });
-        
+        // If composite score below threshold, fallback to direct pairing or pure vector
+        if (bestScore < this.matchConfig.threshold) {
+            if (this.fontPairings[sourceFont] && targetFonts.some(f => f.name === this.fontPairings[sourceFont])) {
+                bestMatch = this.fontPairings[sourceFont];
+                bestScore = this.matchConfig.categoryWeight + this.matchConfig.styleWeight + this.matchConfig.weightWeight + this.matchConfig.similarityWeight;
+            } else {
+                // pure vector fallback
+                let pureBest = null;
+                let maxSim = -1;
+                targetFonts.forEach(f => {
+                    const vec = this.fontVectors[f.name];
+                    if (!vec) return;
+                    const simRaw = this.calculateSimilarity(sourceVector, vec);
+                    const sim = Math.max(0, simRaw);
+                    if (sim > maxSim) { maxSim = sim; pureBest = f.name; }
+                });
+                bestMatch = pureBest;
+                bestScore = maxSim * this.matchConfig.similarityWeight;
+            }
+        }
+        // Cache and return
+        this.matchCache[cacheKey] = bestMatch;
+        this.matchScoreCache[cacheKey] = bestScore;
         return bestMatch;
     }
     
@@ -218,6 +261,13 @@ class FontManager {
         setTimeout(() => {
             document.body.removeChild(preloadDiv);
         }, 3000);
+    }
+    
+    // Get detailed match result: font name and confidence percentage
+    matchFontDetail(sourceFont, targetLang) {
+        const font = this.findMatchingFont(sourceFont, targetLang);
+        const confidence = this.getMatchPercentage(sourceFont, targetLang);
+        return { font, confidence };
     }
 }
 
