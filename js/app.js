@@ -48,35 +48,31 @@ document.addEventListener('DOMContentLoaded', function() {
             themeSwitch.checked = true;
         }
         
-        // Initialize Choices for font select
-        sourceFontChoices = new Choices(sourceFont, {
-            searchEnabled: true,
-            shouldSort: false,
-            itemSelectText: '',
-            placeholderValue: 'Select font',
-            callbackOnCreateTemplates: function(template) {
-                return {
-                    choice: (classNames, data) => {
-                        return template('div', `${classNames.item} ${classNames.itemChoice}`, data.label, {
-                            'data-choice': '',
-                            'data-id': data.id,
-                            'data-value': data.value,
-                            style: `font-family: "${data.value}", sans-serif;`
-                        });
-                    },
-                    item: (classNames, data) => {
-                        return template('div', `${classNames.item} ${classNames.itemSelectable}`, data.label, {
-                            'data-item': '',
-                            'data-id': data.id,
-                            'data-value': data.value,
-                            style: `font-family: "${data.value}", sans-serif;`
-                        });
-                    }
-                };
-            }
+        // Initialize Choices and populate options once all web-fonts have loaded
+        document.addEventListener('fonts-loaded', () => {
+            sourceFontChoices = new Choices(sourceFont, {
+                searchEnabled: true,
+                shouldSort: false,
+                itemSelectText: '',
+                placeholderValue: 'Select font',
+                callbackOnCreateTemplates: function(template) {
+                    return {
+                        choice: (classNames, data) => {
+                            const attrs = { 'data-choice': '', 'data-id': data.id, 'data-value': data.value };
+                            const styledLabel = `<span style=\"font-family: '${data.value}', sans-serif;\">${data.label}</span>`;
+                            return template('div', `${classNames.item} ${classNames.itemChoice}`, styledLabel, attrs);
+                        },
+                        item: (classNames, data) => {
+                            const attrs = { 'data-item': '', 'data-id': data.id, 'data-value': data.value };
+                            const styledLabel = `<span style=\"font-family: '${data.value}', sans-serif;\">${data.label}</span>`;
+                            return template('div', `${classNames.item} ${classNames.itemSelectable}`, styledLabel, attrs);
+                        }
+                    };
+                }
+            });
+            // Populate the font dropdown
+            updateFontOptions();
         });
-        // Populate font dropdown only after fonts have loaded
-        document.addEventListener('fonts-loaded', updateFontOptions);
         
         // Set event listeners
         setupEventListeners();
@@ -225,14 +221,22 @@ document.addEventListener('DOMContentLoaded', function() {
         const choicesArray = fonts.map(font => ({
             value: font.name,
             label: font.name,
-            customProperties: { style: `font-family: ${font.name};` }
+            customProperties: { style: `font-family: '${font.name}', sans-serif;` }
         }));
         // Update Choices dropdown
         sourceFontChoices.clearChoices();
         sourceFontChoices.setChoices(choicesArray, 'value', 'label', true);
+        // Inline-style each dropdown choice immediately
+        sourceFontChoices.passedElement.element.querySelectorAll('.choices__list--dropdown .choices__item--choice').forEach(el => {
+            const name = el.getAttribute('data-value');
+            el.style.fontFamily = `'${name}', sans-serif`;
+        });
         // Set initial selection and preview
         if (fonts.length > 0) {
             sourceFontChoices.setChoiceByValue(fonts[0].name);
+            // Style initial selected item
+            const selEl = sourceFontChoices.passedElement.element.querySelector('.choices__list--single .choices__item');
+            if (selEl) selEl.style.fontFamily = `'${fonts[0].name}', sans-serif`;
             previewFont(fonts[0].name, sourceText);
             updatePlaceholders();
         }

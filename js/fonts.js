@@ -101,21 +101,28 @@ class FontManager {
             .then(data => {
                 this.englishFonts = data.items.map(item => ({ name: item.family, category: 'sans-serif', style: 'variable', weight: 'variable' }));
 
-                // Load all fonts after fetching
-                if (window.WebFont) {
-                    const engFamilies = this.englishFonts.map(f => f.name);
-                    const hebFamilies = this.hebrewFonts.map(f => f.name);
-                    const allFamilies = [...engFamilies, ...hebFamilies];
-                    WebFont.load({
-                        google: { families: allFamilies },
-                        active: () => {
-                            // Notify application that fonts are loaded
+                // Load all fonts via a single Google Fonts API request
+                const allFonts = [...this.englishFonts.map(f => f.name), ...this.hebrewFonts.map(f => f.name)];
+                const familyParams = allFonts
+                    .map(name => name.replace(/ /g, '+'))
+                    // filter duplicates
+                    .filter((v, i, a) => a.indexOf(v) === i);
+                const link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = `https://fonts.googleapis.com/css2?${
+                    familyParams.map(f => `family=${f}`).join('&')
+                }&display=swap`;
+                link.onload = () => {
+                    // Wait for fonts to be fully loaded before initializing dropdown
+                    if (document.fonts && document.fonts.ready) {
+                        document.fonts.ready.then(() => {
                             document.dispatchEvent(new Event('fonts-loaded'));
-                        }
-                    });
-                } else {
-                    document.dispatchEvent(new Event('fonts-loaded'));   
-                }
+                        });
+                    } else {
+                        document.dispatchEvent(new Event('fonts-loaded'));
+                    }
+                };
+                document.head.appendChild(link);
 
                 // Generate vectors for new fonts
                 this.englishFonts.forEach(font => {
@@ -262,17 +269,17 @@ class FontManager {
     
     // Get a sample text for a specific language
     getSampleText(lang) {
-        this.sampleTexts[lang] || '';
+        return this.sampleTexts[lang] || '';
     }
     
     // Get extended sample text for a specific language
     getExtendedSampleText(lang) {
-        this.extendedSampleTexts[lang] || '';
+        return this.extendedSampleTexts[lang] || '';
     }
     
     // Get fonts for specific language
     getFontsForLanguage(lang) {
-        lang === 'en' ? this.englishFonts : this.hebrewFonts;
+        return lang === 'en' ? this.englishFonts : this.hebrewFonts;
     }
     
     // Get all fonts for both languages
