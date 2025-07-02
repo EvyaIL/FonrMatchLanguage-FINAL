@@ -518,11 +518,13 @@ button .en, button .he {
     min-width: 120px;
 }
 
-.language-selector select:focus,
-.custom-select:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.2);
+/* Force native dropdown for language-selector selects */
+.language-selector select {
+    appearance: auto !important;
+    -webkit-appearance: menulist-button !important;
+    -moz-appearance: menulist-button !important;
+    background-image: none !important;
+    cursor: pointer;
 }
 
 /* Textarea styles for improved readability */
@@ -540,6 +542,20 @@ button .en, button .he {
     line-height: 1.6;
     transition: var(--transition);
     box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+#source-text::placeholder, #target-text::placeholder {
+    /* match placeholder font to input font */
+    font-family: inherit !important;
+}
+#source-text::-webkit-input-placeholder, #target-text::-webkit-input-placeholder {
+    font-family: inherit !important;
+}
+#source-text::-moz-placeholder, #target-text::-moz-placeholder {
+    font-family: inherit !important;
+}
+#source-text:-ms-input-placeholder, #target-text:-ms-input-placeholder {
+    font-family: inherit !important;
 }
 
 #source-text:focus, #target-text:focus {
@@ -747,6 +763,7 @@ button .en, button .he {
     margin-bottom: 15px;
     background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 
@@ -853,7 +870,7 @@ button .en, button .he {
 /* Sample text improvements */
 .sample-text {
     font-size: 1.2rem;
-    line-height: 1.8;
+    line-height: 1.6;
     margin-top: 15px;
     padding: 15px;
     border-radius: var(--radius-sm);
@@ -2234,19 +2251,4 @@ footer {
     background: #ff6b6b;
     color: white;
     border-color: #ff6b6b;
-}
-
-@media (max-width: 768px) {
-    .match-info {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    
-    .match-preview {
-        grid-template-columns: 1fr;
-    }
-    
-    .match-actions {
-        justify-content: flex-start;
-    }
 }

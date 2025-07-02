@@ -17,17 +17,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const sourceLanguage = document.getElementById('source-language');
     const targetLanguage = document.getElementById('target-language');
     const sourceFont = document.getElementById('source-font');
+    const targetFontSelect = document.getElementById('target-font');
     const sourceText = document.getElementById('source-text');
-    const outputText = document.getElementById('output-text');
-    const matchButton = document.getElementById('match-button');
-    const swapButton = document.getElementById('swap-languages');
-    const fontName = document.getElementById('font-name');
-    const loadingOverlay = document.getElementById('loading-overlay');
     const aboutButton = document.getElementById('about-button');
     const closeModalButtons = document.querySelectorAll('.close-modal');
     const aboutModal = document.getElementById('about-modal');
     const targetText = document.getElementById('target-text');
     const fontComparisonDisplay = document.getElementById('font-comparison-display');
+    const matchButton = document.getElementById('match-button');
+    const swapButton = document.getElementById('swap-languages');
     
     // Check for missing critical elements
     if (!sourceLanguage || !targetLanguage || !sourceFont || !sourceText || !matchButton) {
@@ -132,6 +130,17 @@ document.addEventListener('DOMContentLoaded', function() {
         if (sourceFont) {
             sourceFont.addEventListener('change', function() {
                 previewFont(this.value, sourceText);
+                // update dropdown display by setting CSS variable
+                this.style.setProperty('--dropdown-font', this.value);
+                updatePlaceholders();
+            });
+        }
+        // Target font selection preview
+        if (targetFontSelect) {
+            targetFontSelect.addEventListener('change', function() {
+                previewFont(this.value, targetText);
+                this.style.setProperty('--dropdown-font', this.value);
+                updatePlaceholders();
             });
         }
     }
@@ -197,9 +206,12 @@ document.addEventListener('DOMContentLoaded', function() {
             sourceFont.appendChild(option);
         });
         
-        // Set initial preview
+        // Set initial preview and select style to first font
         if (fonts.length > 0) {
             previewFont(fonts[0].name, sourceText);
+            // apply selected font via CSS variable for dropdown display
+            sourceFont.style.setProperty('--dropdown-font', fonts[0].name);
+            updatePlaceholders();
         }
     }
 
@@ -210,11 +222,12 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Swap text content
         const tempText = sourceText.value;
-        sourceText.value = outputText.textContent || '';
-        outputText.textContent = tempText;
-        
-        updateFontOptions();
-    }
+        sourceText.value = targetText.value;
+        targetText.value = tempText;
+
+         updateFontOptions();
+         updatePlaceholders();
+     }
     
     function previewFont(fontName, element) {
         element.style.fontFamily = fontName;
@@ -224,8 +237,20 @@ document.addEventListener('DOMContentLoaded', function() {
         const sourceLang = sourceLanguage.value;
         const targetLang = targetLanguage.value;
         
-        sourceText.placeholder = `Enter text in ${sourceLang === 'en' ? 'English' : 'Hebrew'}`;
-        targetText.placeholder = `Enter text in ${targetLang === 'en' ? 'English' : 'Hebrew'}`;
+        // Set English placeholder or Hebrew placeholder in actual Hebrew text
+        sourceText.placeholder = sourceLang === 'en'
+            ? 'Enter text in English'
+            : 'הזן טקסט בעברית';
+        targetText.placeholder = targetLang === 'en'
+            ? 'Enter text in English'
+            : 'הזן טקסט בעברית';
+        // Apply selected fonts to inputs (placeholder and input text)
+        if (sourceFont.value) {
+            sourceText.style.fontFamily = sourceFont.value;
+        }
+        if (targetFontSelect && targetFontSelect.value) {
+            targetText.style.fontFamily = targetFontSelect.value;
+        }
     }
 
     function findMatchingFont() {
@@ -265,8 +290,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     fontName.textContent = matchedFont || 'No match found';
                 }
                 
-                if (outputText && matchedFont) {
-                    outputText.style.fontFamily = matchedFont;
+                // Apply matched font to target text input
+                if (targetText && matchedFont) {
+                    targetText.style.fontFamily = matchedFont;
                 }
                 
                 // Display visual comparison
@@ -301,6 +327,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Apply source font to input
                 if (sourceText) {
                     sourceText.style.fontFamily = selectedFont;
+                }
+                // Ensure target text uses matched font
+                if (targetText && matchedFont) {
+                    targetText.style.fontFamily = matchedFont;
                 }
                 
             } catch (error) {
@@ -495,4 +525,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         return element;
     }
+
+    // Refresh font options once Google Fonts are loaded dynamically
+    document.addEventListener('fonts-loaded', () => {
+        updateFontOptions();
+    });
 });

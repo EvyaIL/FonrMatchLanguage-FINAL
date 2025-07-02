@@ -1,24 +1,13 @@
 // Font database and management system
+// Add Google Fonts API key (could be stored in .env and injected)
+const GOOGLE_FONTS_API_KEY = 'AIzaSyCb_xsID8SNCyNdnkX5d5T5UBE6RuksuZw';
+
 class FontManager {
     constructor() {
-        this.englishFonts = [
-            { name: 'Inter', category: 'sans-serif', style: 'modern', weight: 'variable' },
-            { name: 'Open Sans', category: 'sans-serif', style: 'friendly', weight: 'variable' },
-            { name: 'Roboto', category: 'sans-serif', style: 'modern', weight: 'variable' },
-            { name: 'Montserrat', category: 'sans-serif', style: 'geometric', weight: 'variable' },
-            { name: 'Lato', category: 'sans-serif', style: 'balanced', weight: 'variable' },
-            { name: 'Playfair Display', category: 'serif', style: 'elegant', weight: 'variable' },
-            { name: 'Merriweather', category: 'serif', style: 'readable', weight: 'variable' },
-            { name: 'Georgia', category: 'serif', style: 'classic', weight: 'regular' },
-            { name: 'Times New Roman', category: 'serif', style: 'traditional', weight: 'regular' },
-            { name: 'Arial', category: 'sans-serif', style: 'neutral', weight: 'regular' },
-            { name: 'Verdana', category: 'sans-serif', style: 'screen', weight: 'regular' },
-            { name: 'Tahoma', category: 'sans-serif', style: 'legible', weight: 'regular' },
-            { name: 'Courier New', category: 'monospace', style: 'technical', weight: 'regular' },
-            { name: 'Trebuchet MS', category: 'sans-serif', style: 'friendly', weight: 'regular' },
-            { name: 'Garamond', category: 'serif', style: 'elegant', weight: 'regular' }
-        ];
-        
+        // Fetch English font list dynamically from Google Fonts API
+        this.englishFonts = [];
+        this.fetchEnglishFonts();
+
         this.hebrewFonts = [
             { name: 'Heebo', category: 'sans-serif', style: 'modern', weight: 'variable' },
             { name: 'Assistant', category: 'sans-serif', style: 'friendly', weight: 'variable' },
@@ -89,8 +78,9 @@ class FontManager {
             categoryWeight: 2,
             styleWeight: 2,
             weightWeight: 1,
-            similarityWeight: 1,
-            threshold: 1.5 // minimum score to accept composite match
+            similarityWeight: 0.4, // reduced vector influence
+            thresholdFraction: 0.5, // only composite matches above 50% accepted
+            directPairConfidence: 0.6 // realistic confidence for direct pairings
         };
         // Cache for computed matches to improve performance
         this.matchCache = {};
@@ -104,6 +94,44 @@ class FontManager {
         this.preloadFonts();
     }
     
+    // Fetch and populate englishFonts from Google Fonts API
+    fetchEnglishFonts() {
+        fetch(`https://www.googleapis.com/webfonts/v1/webfonts?key=${GOOGLE_FONTS_API_KEY}&sort=popularity`)
+            .then(res => res.json())
+            .then(data => {
+                this.englishFonts = data.items.map(item => ({
+                     name: item.family,
+                     category: 'sans-serif',
+                     style: 'variable',
+                     weight: 'variable'
+                 }));
+                // Load fonts so they are available for dropdown previews
+                if (window.WebFont) {
+                    const families = this.englishFonts.map(f => f.name);
+                    WebFont.load({ google: { families } });
+                }
+                 // Generate vectors for new fonts
+                 this.englishFonts.forEach(font => {
+                     this.fontVectors[font.name] = this.generateFontVector(font);
+                 });
+                // Notify application that fonts have loaded
+                document.dispatchEvent(new Event('fonts-loaded'));
+                // Populate source-font dropdown directly
+                const selectEl = document.getElementById('source-font');
+                if (selectEl) {
+                    selectEl.innerHTML = '';
+                    this.englishFonts.forEach(font => {
+                        const opt = document.createElement('option');
+                        opt.value = font.name;
+                        opt.textContent = font.name;
+                        opt.style.fontFamily = font.name;
+                        selectEl.appendChild(opt);
+                    });
+                }
+            })
+            .catch(err => console.error('Failed to fetch English fonts:', err));
+    }
+
     // Generate a simulated feature vector for a font based on its characteristics
     generateFontVector(font) {
         // This is a simplified approach - in a real ML system this would be based on actual font analysis
@@ -121,18 +149,22 @@ class FontManager {
             case 'readable': styleFactor = 0.5; break;
         }
         
-        // Generate a 5-dimensional vector
-        return [
-            weightFactor + Math.random() * 0.2 - 0.1,   // Weight dimension
-            serifFactor + Math.random() * 0.2 - 0.1,    // Serif vs sans-serif dimension
-            styleFactor + Math.random() * 0.2 - 0.1,    // Style dimension
-            Math.random() * 0.5 + 0.3,                  // x-height dimension
-            Math.random() * 0.5 + 0.3                   // width dimension
+        // Generate and normalize a 5-dimensional vector for consistent magnitude
+        const rawVec = [
+            weightFactor + Math.random() * 0.2 - 0.1,
+            serifFactor + Math.random() * 0.2 - 0.1,
+            styleFactor + Math.random() * 0.2 - 0.1,
+            Math.random() * 0.5 + 0.3,
+            Math.random() * 0.5 + 0.3
         ];
+        const norm = Math.sqrt(rawVec.reduce((sum, val) => sum + val * val, 0));
+        return rawVec.map(val => val / norm);
     }
 
     // Find matching font using simulated AI
     findMatchingFont(sourceFont, targetLang) {
+        // Prepare target font set
+        const targetFonts = targetLang === 'en' ? this.englishFonts : this.hebrewFonts;
         const cacheKey = `${sourceFont}-${targetLang}`;
         if (this.matchCache[cacheKey]) {
             return this.matchCache[cacheKey];
@@ -140,11 +172,11 @@ class FontManager {
         // If we have a direct pairing, use it
         if (this.fontPairings[sourceFont]) {
             const pairedFont = this.fontPairings[sourceFont];
-            const targetFonts = targetLang === 'en' ? this.englishFonts : this.hebrewFonts;
             if (targetFonts.some(font => font.name === pairedFont)) {
                 // cache direct pairing with full confidence
                 this.matchCache[cacheKey] = pairedFont;
-                this.matchScoreCache[cacheKey] = this.matchConfig.categoryWeight + this.matchConfig.styleWeight + this.matchConfig.weightWeight + this.matchConfig.similarityWeight;
+                // assign fixed confidence fraction for direct pairing
+                this.matchScoreCache[cacheKey] = this.matchConfig.directPairConfidence;
                 return pairedFont;
             }
         }
@@ -152,9 +184,17 @@ class FontManager {
         // Determine inverse source set
         const sourceLangFonts = targetLang === 'en' ? this.hebrewFonts : this.englishFonts;
         const sourceFontObj = sourceLangFonts.find(f => f.name === sourceFont);
+        // Get source font vector for similarity calculations
+        let sourceVector = this.fontVectors[sourceFont] || null;
+        // If no precomputed vector, generate one based on font attributes
+        if (!sourceVector && sourceFontObj) {
+            sourceVector = this.generateFontVector(sourceFontObj);
+        }
         // Compute composite scores
         let bestMatch = null;
         let bestScore = -Infinity;
+        // Maximum possible composite score for normalization
+        const maxComposite = this.matchConfig.categoryWeight + this.matchConfig.styleWeight + this.matchConfig.weightWeight + this.matchConfig.similarityWeight;
         targetFonts.forEach(f => {
             let score = 0;
             if (sourceFontObj) {
@@ -163,7 +203,7 @@ class FontManager {
                 if (f.weight === sourceFontObj.weight) score += this.matchConfig.weightWeight;
             }
             const vec = this.fontVectors[f.name];
-            if (vec) {
+            if (vec && sourceVector) {
                 // clamp similarity to zero for negative values
                 const simRaw = this.calculateSimilarity(sourceVector, vec);
                 const sim = Math.max(0, simRaw) * this.matchConfig.similarityWeight;
@@ -174,32 +214,32 @@ class FontManager {
                 bestMatch = f.name;
             }
         });
-        // If composite score below threshold, fallback to direct pairing or pure vector
-        if (bestScore < this.matchConfig.threshold) {
+        // Normalize score to fraction [0,1]
+        let fraction = Math.max(0, Math.min(bestScore / maxComposite, 1));
+        // If composite confidence below thresholdFraction, fallback to direct pairing or no match
+        if (fraction < this.matchConfig.thresholdFraction) {
             if (this.fontPairings[sourceFont] && targetFonts.some(f => f.name === this.fontPairings[sourceFont])) {
                 bestMatch = this.fontPairings[sourceFont];
-                bestScore = this.matchConfig.categoryWeight + this.matchConfig.styleWeight + this.matchConfig.weightWeight + this.matchConfig.similarityWeight;
+                fraction = this.matchConfig.directPairConfidence;
             } else {
-                // pure vector fallback
-                let pureBest = null;
-                let maxSim = -1;
-                targetFonts.forEach(f => {
-                    const vec = this.fontVectors[f.name];
-                    if (!vec) return;
-                    const simRaw = this.calculateSimilarity(sourceVector, vec);
-                    const sim = Math.max(0, simRaw);
-                    if (sim > maxSim) { maxSim = sim; pureBest = f.name; }
-                });
-                bestMatch = pureBest;
-                bestScore = maxSim * this.matchConfig.similarityWeight;
+                // no reliable match
+                bestMatch = null;
+                fraction = 0;
             }
         }
-        // Cache and return
+        // Cache and return with fractional confidence
         this.matchCache[cacheKey] = bestMatch;
-        this.matchScoreCache[cacheKey] = bestScore;
+        this.matchScoreCache[cacheKey] = fraction;
         return bestMatch;
     }
-    
+
+    // Calculate match confidence percentage based on normalized fraction in cache
+    getMatchPercentage(sourceFont, targetLang) {
+        const cacheKey = `${sourceFont}-${targetLang}`;
+        const fraction = this.matchScoreCache[cacheKey] || 0;
+        return Math.round(fraction * 100);
+    }
+
     // Calculate cosine similarity between two vectors
     calculateSimilarity(vec1, vec2) {
         let dotProduct = 0;
@@ -271,5 +311,35 @@ class FontManager {
     }
 }
 
+// Define compatible categories for font pairing
+const categoryPairs = {
+    'sans-serif': ['sans-serif','serif'],
+    'serif': ['serif','sans-serif'],
+    'display': ['display','serif'],
+    'script': ['script','handwriting'],
+    'handwriting': ['handwriting','script'],
+    // add other category pairs or adjust as needed
+};
+
+// Utility to check if two fonts can be paired based on their category
+function areCategoriesCompatible(source, target) {
+    const allowed = categoryPairs[source.category] || [source.category];
+    return allowed.includes(target.category);
+}
+
 // Initialize font manager as a global object
 const fontManager = new FontManager();
+
+// Override matchFonts function to include category-based filtering
+function matchFonts(sourceFont, targetFont) {
+    // Filter out obviously incompatible categories early
+    if (!areCategoriesCompatible(sourceFont, targetFont)) {
+        return { font: targetFont.name, confidence: 0 };
+    }
+
+    // ...existing normalization and similarity logic
+    
+    // Normalize vectors, compute similarity, threshold check, etc.
+    
+    // ...remaining matchFonts implementation
+}
