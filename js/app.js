@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const sourceLanguage = document.getElementById('source-language');
     const targetLanguage = document.getElementById('target-language');
     const sourceFont = document.getElementById('source-font');
+    let sourceFontChoices;
     const targetFontSelect = document.getElementById('target-font');
     const sourceText = document.getElementById('source-text');
     const aboutButton = document.getElementById('about-button');
@@ -47,8 +48,35 @@ document.addEventListener('DOMContentLoaded', function() {
             themeSwitch.checked = true;
         }
         
-        // Populate font dropdown
-        updateFontOptions();
+        // Initialize Choices for font select
+        sourceFontChoices = new Choices(sourceFont, {
+            searchEnabled: true,
+            shouldSort: false,
+            itemSelectText: '',
+            placeholderValue: 'Select font',
+            callbackOnCreateTemplates: function(template) {
+                return {
+                    choice: (classNames, data) => {
+                        return template('div', `${classNames.item} ${classNames.itemChoice}`, data.label, {
+                            'data-choice': '',
+                            'data-id': data.id,
+                            'data-value': data.value,
+                            style: `font-family: "${data.value}", sans-serif;`
+                        });
+                    },
+                    item: (classNames, data) => {
+                        return template('div', `${classNames.item} ${classNames.itemSelectable}`, data.label, {
+                            'data-item': '',
+                            'data-id': data.id,
+                            'data-value': data.value,
+                            style: `font-family: "${data.value}", sans-serif;`
+                        });
+                    }
+                };
+            }
+        });
+        // Populate font dropdown only after fonts have loaded
+        document.addEventListener('fonts-loaded', updateFontOptions);
         
         // Set event listeners
         setupEventListeners();
@@ -192,25 +220,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function updateFontOptions() {
         const lang = sourceLanguage.value;
-        
-        // Clear existing options
-        sourceFont.innerHTML = '';
-        
-        // Add font options for selected language
         const fonts = fontManager.getFontsForLanguage(lang);
-        fonts.forEach(font => {
-            const option = document.createElement('option');
-            option.value = font.name;
-            option.textContent = font.name;
-            option.style.fontFamily = font.name;
-            sourceFont.appendChild(option);
-        });
-        
-        // Set initial preview and select style to first font
+        // Prepare choices items with font-family styling
+        const choicesArray = fonts.map(font => ({
+            value: font.name,
+            label: font.name,
+            customProperties: { style: `font-family: ${font.name};` }
+        }));
+        // Update Choices dropdown
+        sourceFontChoices.clearChoices();
+        sourceFontChoices.setChoices(choicesArray, 'value', 'label', true);
+        // Set initial selection and preview
         if (fonts.length > 0) {
+            sourceFontChoices.setChoiceByValue(fonts[0].name);
             previewFont(fonts[0].name, sourceText);
-            // apply selected font via CSS variable for dropdown display
-            sourceFont.style.setProperty('--dropdown-font', fonts[0].name);
             updatePlaceholders();
         }
     }

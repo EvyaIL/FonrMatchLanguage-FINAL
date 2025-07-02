@@ -99,24 +99,30 @@ class FontManager {
         fetch(`https://www.googleapis.com/webfonts/v1/webfonts?key=${GOOGLE_FONTS_API_KEY}&sort=popularity`)
             .then(res => res.json())
             .then(data => {
-                this.englishFonts = data.items.map(item => ({
-                     name: item.family,
-                     category: 'sans-serif',
-                     style: 'variable',
-                     weight: 'variable'
-                 }));
-                // Load fonts so they are available for dropdown previews
+                this.englishFonts = data.items.map(item => ({ name: item.family, category: 'sans-serif', style: 'variable', weight: 'variable' }));
+
+                // Load all fonts after fetching
                 if (window.WebFont) {
-                    const families = this.englishFonts.map(f => f.name);
-                    WebFont.load({ google: { families } });
+                    const engFamilies = this.englishFonts.map(f => f.name);
+                    const hebFamilies = this.hebrewFonts.map(f => f.name);
+                    const allFamilies = [...engFamilies, ...hebFamilies];
+                    WebFont.load({
+                        google: { families: allFamilies },
+                        active: () => {
+                            // Notify application that fonts are loaded
+                            document.dispatchEvent(new Event('fonts-loaded'));
+                        }
+                    });
+                } else {
+                    document.dispatchEvent(new Event('fonts-loaded'));   
                 }
-                 // Generate vectors for new fonts
-                 this.englishFonts.forEach(font => {
-                     this.fontVectors[font.name] = this.generateFontVector(font);
-                 });
-                // Notify application that fonts have loaded
-                document.dispatchEvent(new Event('fonts-loaded'));
-                // Populate source-font dropdown directly
+
+                // Generate vectors for new fonts
+                this.englishFonts.forEach(font => {
+                    this.fontVectors[font.name] = this.generateFontVector(font);
+                });
+
+                // Populate source-font initial select if still desired (Choices will handle later)
                 const selectEl = document.getElementById('source-font');
                 if (selectEl) {
                     selectEl.innerHTML = '';
@@ -124,7 +130,6 @@ class FontManager {
                         const opt = document.createElement('option');
                         opt.value = font.name;
                         opt.textContent = font.name;
-                        opt.style.fontFamily = font.name;
                         selectEl.appendChild(opt);
                     });
                 }
@@ -257,17 +262,17 @@ class FontManager {
     
     // Get a sample text for a specific language
     getSampleText(lang) {
-        return this.sampleTexts[lang] || '';
+        this.sampleTexts[lang] || '';
     }
     
     // Get extended sample text for a specific language
     getExtendedSampleText(lang) {
-        return this.extendedSampleTexts[lang] || '';
+        this.extendedSampleTexts[lang] || '';
     }
     
     // Get fonts for specific language
     getFontsForLanguage(lang) {
-        return lang === 'en' ? this.englishFonts : this.hebrewFonts;
+        lang === 'en' ? this.englishFonts : this.hebrewFonts;
     }
     
     // Get all fonts for both languages
