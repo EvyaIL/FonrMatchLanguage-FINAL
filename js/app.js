@@ -48,30 +48,39 @@ document.addEventListener('DOMContentLoaded', function() {
             themeSwitch.checked = true;
         }
         
-        // Initialize Choices and populate options once all web-fonts have loaded
+        // Once all fonts are loaded, build and init Choices with styled choices
         document.addEventListener('fonts-loaded', () => {
+            const fonts = window.fontManager.getFontsForLanguage(sourceLanguage.value);
+            const choicesArray = fonts.map(f => ({
+                value: f.name,
+                label: f.name,
+                customProperties: { style: `font-family: '${f.name}', sans-serif;` }
+            }));
             sourceFontChoices = new Choices(sourceFont, {
                 searchEnabled: true,
                 shouldSort: false,
                 itemSelectText: '',
                 placeholderValue: 'Select font',
+                choices: choicesArray,
                 callbackOnCreateTemplates: function(template) {
                     return {
-                        choice: (classNames, data) => {
-                            const attrs = { 'data-choice': '', 'data-id': data.id, 'data-value': data.value };
-                            const styledLabel = `<span style=\"font-family: '${data.value}', sans-serif;\">${data.label}</span>`;
-                            return template('div', `${classNames.item} ${classNames.itemChoice}`, styledLabel, attrs);
-                        },
-                        item: (classNames, data) => {
-                            const attrs = { 'data-item': '', 'data-id': data.id, 'data-value': data.value };
-                            const styledLabel = `<span style=\"font-family: '${data.value}', sans-serif;\">${data.label}</span>`;
-                            return template('div', `${classNames.item} ${classNames.itemSelectable}`, styledLabel, attrs);
-                        }
+                        choice: (classNames, data) => template(
+                            'div',
+                            `${classNames.item} ${classNames.itemChoice}`,
+                            data.label,
+                            data.customProperties.style ? { 'style': data.customProperties.style, 'data-choice': '', 'data-id': data.id, 'data-value': data.value } : { 'data-choice': '', 'data-id': data.id, 'data-value': data.value }
+                        ),
+                        item: (classNames, data) => template(
+                            'div',
+                            `${classNames.item} ${classNames.itemSelectable}`,
+                            data.label,
+                            data.customProperties.style ? { 'style': data.customProperties.style, 'data-item': '', 'data-id': data.id, 'data-value': data.value } : { 'data-item': '', 'data-id': data.id, 'data-value': data.value }
+                        )
                     };
                 }
             });
-            // Populate the font dropdown
-            updateFontOptions();
+            // Select first font by default
+            if (fonts.length) sourceFontChoices.setChoiceByValue(fonts[0].name);
         });
         
         // Set event listeners
