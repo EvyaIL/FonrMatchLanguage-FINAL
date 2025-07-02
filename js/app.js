@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const sourceLanguage = document.getElementById('source-language');
     const targetLanguage = document.getElementById('target-language');
     const sourceFont = document.getElementById('source-font');
-    let sourceFontChoices;
+    let sourceFontChoices = null; // Will be initialized by Choices.js
     const targetFontSelect = document.getElementById('target-font');
     const sourceText = document.getElementById('source-text');
     const aboutButton = document.getElementById('about-button');
@@ -33,69 +33,78 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error('Critical DOM elements missing for font matching');
         return;
     }
-    
+
+    // Debounce function to limit how often a function is called
+    function debounce(func, wait) {
+        let timeout;
+        return function(...args) {
+            const context = this;
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(context, args), wait);
+        };
+    }
+
     // Initialize the page
     init();
 
     function init() {
         // Set initial language
         setLanguage(localStorage.getItem('language') || 'en');
-        
+
         // Set initial theme
-        if (localStorage.getItem('theme') === 'dark' || 
+        if (localStorage.getItem('theme') === 'dark' ||
             (window.matchMedia('(prefers-color-scheme: dark)').matches && !localStorage.getItem('theme'))) {
             body.classList.add('dark-mode');
-            themeSwitch.checked = true;
+            if (themeSwitch) themeSwitch.checked = true;
         }
-        
-        // Once all fonts are loaded, build and init Choices with styled choices
-        document.addEventListener('fonts-loaded', () => {
-            const fonts = window.fontManager.getFontsForLanguage(sourceLanguage.value);
-            const choicesArray = fonts.map(f => ({
-                value: f.name,
-                label: f.name,
-                customProperties: { style: `font-family: '${f.name}', sans-serif;` }
-            }));
-            sourceFontChoices = new Choices(sourceFont, {
-                searchEnabled: true,
-                shouldSort: false,
-                itemSelectText: '',
-                placeholderValue: 'Select font',
-                choices: choicesArray,
-                callbackOnCreateTemplates: function(template) {
-                    return {
-                        choice: (classNames, data) => template(
-                            'div',
-                            `${classNames.item} ${classNames.itemChoice}`,
-                            data.label,
-                            data.customProperties.style ? { 'style': data.customProperties.style, 'data-choice': '', 'data-id': data.id, 'data-value': data.value } : { 'data-choice': '', 'data-id': data.id, 'data-value': data.value }
-                        ),
-                        item: (classNames, data) => template(
-                            'div',
-                            `${classNames.item} ${classNames.itemSelectable}`,
-                            data.label,
-                            data.customProperties.style ? { 'style': data.customProperties.style, 'data-item': '', 'data-id': data.id, 'data-value': data.value } : { 'data-item': '', 'data-id': data.id, 'data-value': data.value }
-                        )
-                    };
-                }
-            });
-            // Select first font by default
-            if (fonts.length) sourceFontChoices.setChoiceByValue(fonts[0].name);
-        });
-        
+
         // Set event listeners
         setupEventListeners();
-        
-        // Set sample text
-        if (translationService && translationService.getUIString) {
-            sourceText.placeholder = translationService.getUIString('enter_text', 
-                localStorage.getItem('language') || 'en');
-        } else {
-            sourceText.placeholder = 'Enter text here';
-        }
-        
-        // Set placeholder text for both languages
+
+        // Set initial placeholder text
         updatePlaceholders();
+    }
+
+    function initializeFontPicker() {
+        if (sourceFontChoices) {
+            sourceFontChoices.destroy();
+        }
+
+        const lang = sourceLanguage.value;
+        const fonts = window.fontManager.getFontsForLanguage(lang);
+        const choicesArray = fonts.map(f => ({
+            value: f.name,
+            label: f.name,
+            customProperties: { style: `font-family: '${f.name}', sans-serif;` }
+        }));
+
+        sourceFontChoices = new Choices(sourceFont, {
+            searchEnabled: true,
+            shouldSort: false,
+            itemSelectText: '',
+            placeholderValue: 'Select a font',
+            choices: choicesArray,
+            allowHTML: true, // Allow HTML in choices
+            callbackOnCreateTemplates: function(template) {
+                return {
+                    item: (classNames, data) => {
+                        return template(
+                            `<div class="${classNames.item} ${classNames.itemSelectable}" data-item data-id="${data.id}" data-value="${data.value}" style="${data.customProperties.style}">${data.label}</div>`
+                        );
+                    },
+                    choice: (classNames, data) => {
+                        return template(
+                            `<div class="${classNames.item} ${classNames.itemChoice}" data-choice data-id="${data.id}" data-value="${data.value}" style="${data.customProperties.style}">${data.label}</div>`
+                        );
+                    },
+                };
+            }
+        });
+
+        if (fonts.length > 0) {
+            sourceFontChoices.setChoiceByValue(fonts[0].name);
+            previewFont(fonts[0].name, sourceText);
+        }
     }
 
     function setupEventListeners() {
@@ -117,9 +126,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (targetLanguage) {
                     targetLanguage.value = this.value === 'en' ? 'he' : 'en';
                 }
-                updateFontOptions();
-                
-                // Update placeholders to match languages
+                // Debounced update to prevent rapid firing
+                debounce(updateFontOptions, 200)();
                 updatePlaceholders();
             });
         }
@@ -162,12 +170,20 @@ document.addEventListener('DOMContentLoaded', function() {
         // Font selection preview
         if (sourceFont) {
             sourceFont.addEventListener('change', function() {
-                previewFont(this.value, sourceText);
-                // update dropdown display by setting CSS variable
-                this.style.setProperty('--dropdown-font', this.value);
-                updatePlaceholders();
+                if (sourceFontChoices) {
+                    const selectedValue = sourceFontChoices.getValue(true);
+                    previewFont(selectedValue, sourceText);
+                    updatePlaceholders();
+                }
             });
         }
+
+        // Listen for when fonts are loaded dynamically
+        document.addEventListener('fonts-loaded', () => {
+            console.log('Fonts loaded event received, initializing font picker.');
+            initializeFontPicker();
+        });
+
         // Target font selection preview
         if (targetFontSelect) {
             targetFontSelect.addEventListener('change', function() {
@@ -224,31 +240,27 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function updateFontOptions() {
-        const lang = sourceLanguage.value;
-        const fonts = fontManager.getFontsForLanguage(lang);
-        // Prepare choices items with font-family styling
-        const choicesArray = fonts.map(font => ({
-            value: font.name,
-            label: font.name,
-            customProperties: { style: `font-family: '${font.name}', sans-serif;` }
-        }));
-        // Update Choices dropdown
-        sourceFontChoices.clearChoices();
-        sourceFontChoices.setChoices(choicesArray, 'value', 'label', true);
-        // Inline-style each dropdown choice immediately
-        sourceFontChoices.passedElement.element.querySelectorAll('.choices__list--dropdown .choices__item--choice').forEach(el => {
-            const name = el.getAttribute('data-value');
-            el.style.fontFamily = `'${name}', sans-serif`;
-        });
-        // Set initial selection and preview
-        if (fonts.length > 0) {
-            sourceFontChoices.setChoiceByValue(fonts[0].name);
-            // Style initial selected item
-            const selEl = sourceFontChoices.passedElement.element.querySelector('.choices__list--single .choices__item');
-            if (selEl) selEl.style.fontFamily = `'${fonts[0].name}', sans-serif`;
-            previewFont(fonts[0].name, sourceText);
-            updatePlaceholders();
+        console.log('Updating font options for language:', sourceLanguage.value);
+        if (sourceFontChoices) {
+            const lang = sourceLanguage.value;
+            const fonts = fontManager.getFontsForLanguage(lang);
+            const choicesArray = fonts.map(font => ({
+                value: font.name,
+                label: font.name,
+                customProperties: { style: `font-family: '${font.name}', sans-serif;` }
+            }));
+
+            sourceFontChoices.setChoices(choicesArray, 'value', 'label', true);
+
+            if (fonts.length > 0) {
+                sourceFontChoices.setChoiceByValue(fonts[0].name);
+                previewFont(fonts[0].name, sourceText);
+            }
+        } else {
+            console.log('Choices.js not initialized, initializing now.');
+            initializeFontPicker();
         }
+        updatePlaceholders();
     }
 
     function swapLanguages() {
@@ -261,12 +273,14 @@ document.addEventListener('DOMContentLoaded', function() {
         sourceText.value = targetText.value;
         targetText.value = tempText;
 
-         updateFontOptions();
-         updatePlaceholders();
-     }
-    
+        updateFontOptions();
+        updatePlaceholders();
+    }
+
     function previewFont(fontName, element) {
-        element.style.fontFamily = fontName;
+        if (fontName && element) {
+            element.style.fontFamily = `'${fontName}', sans-serif`;
+        }
     }
 
     function updatePlaceholders() {
@@ -274,25 +288,29 @@ document.addEventListener('DOMContentLoaded', function() {
         const targetLang = targetLanguage.value;
         
         // Set English placeholder or Hebrew placeholder in actual Hebrew text
-        sourceText.placeholder = sourceLang === 'en'
-            ? 'Enter text in English'
-            : 'הזן טקסט בעברית';
-        targetText.placeholder = targetLang === 'en'
-            ? 'Enter text in English'
-            : 'הזן טקסט בעברית';
+        sourceText.placeholder = sourceLang === 'en' ?
+            'Enter text in English' :
+            'הזן טקסט בעברית';
+        targetText.placeholder = targetLang === 'en' ?
+            'Enter text in English' :
+            'הזן טקסט בעברית';
+
         // Apply selected fonts to inputs (placeholder and input text)
-        if (sourceFont.value) {
-            sourceText.style.fontFamily = sourceFont.value;
+        if (sourceFontChoices) {
+            const selectedValue = sourceFontChoices.getValue(true);
+            if (selectedValue) {
+                previewFont(selectedValue, sourceText);
+            }
         }
         if (targetFontSelect && targetFontSelect.value) {
-            targetText.style.fontFamily = targetFontSelect.value;
+            previewFont(targetFontSelect.value, targetText);
         }
     }
 
     function findMatchingFont() {
         const sourceLang = sourceLanguage.value;
         const targetLang = targetLanguage.value;
-        const selectedFont = sourceFont.value;
+        const selectedFont = sourceFontChoices.getValue(true);
         const inputText = sourceText.value || getDefaultText(sourceLang);
         const targetInputText = targetText.value || getDefaultText(targetLang);
         
