@@ -16,24 +16,36 @@ const startServer = async () => {
   try {
     console.log('Starting server initialization...');
     
-    // Connect to database first
-    console.log('Connecting to database...');
-    await connectDB();
-    console.log('Database connection established.');
-
-    // Only proceed after successful database connection
-    if (mongoose.connection.readyState !== 1) {
-      throw new Error('Database connection not ready');
+    // Try to connect to database, but don't fail if it's not available
+    console.log('Attempting database connection...');
+    try {
+      await connectDB();
+      console.log('Database connection established.');
+    } catch (dbError) {
+      console.warn('Database connection failed, continuing without database features:', dbError.message);
+      console.log('Font features will still work normally.');
     }
 
-    // Load models after DB connection
-    require('./models/User');
-    require('./models/FontMatch');
+    // Load models only if database is connected
+    if (mongoose.connection.readyState === 1) {
+      require('./models/User');
+      require('./models/FontMatch');
+      console.log('Database models loaded.');
+    } else {
+      console.log('Skipping model loading - database not connected.');
+    }
 
-    // Import routes
-    const authRoutes = require('./routes/auth');
-    const googleAuthRoutes = require('./routes/auth/google-auth-routes');
-    const fontMatchRoutes = require('./routes/fontMatches');
+    // Import routes conditionally based on database connection
+    let authRoutes, googleAuthRoutes, fontMatchRoutes;
+    
+    if (mongoose.connection.readyState === 1) {
+      authRoutes = require('./routes/auth');
+      googleAuthRoutes = require('./routes/auth/google-auth-routes');
+      fontMatchRoutes = require('./routes/fontMatches');
+      console.log('Database-dependent routes loaded.');
+    } else {
+      console.log('Skipping database-dependent routes.');
+    }
 
     const app = express();
 
@@ -80,12 +92,17 @@ const startServer = async () => {
       }
     }));
 
-    // Passport middleware
-    app.use(passport.initialize());
-    app.use(passport.session());
-
-    // Initialize passport
-    configurePassport();
+    // Passport middleware - only if database is available
+    if (mongoose.connection.readyState === 1) {
+      app.use(passport.initialize());
+      app.use(passport.session());
+      
+      // Initialize passport
+      configurePassport();
+      console.log('Passport authentication configured.');
+    } else {
+      console.log('Skipping Passport configuration - no database connection.');
+    }
 
     // Serve static files from various directories
     app.use(express.static(path.join(__dirname, '..'))); // Root directory
@@ -98,10 +115,22 @@ const startServer = async () => {
       res.json({ status: 'ok' });
     });
 
-    // Routes
-    app.use('/api/v1/auth', authRoutes);
-    app.use('/api/v1/auth', googleAuthRoutes); // Add the new Google auth routes
-    app.use('/api/v1/fontmatches', fontMatchRoutes);
+    // Routes - only mount database-dependent routes if DB is connected
+    if (mongoose.connection.readyState === 1 && authRoutes && googleAuthRoutes && fontMatchRoutes) {
+      app.use('/api/v1/auth', authRoutes);
+      app.use('/api/v1/auth', googleAuthRoutes); // Add the new Google auth routes
+      app.use('/api/v1/fontmatches', fontMatchRoutes);
+      console.log('Database-dependent API routes mounted.');
+    } else {
+      console.log('Skipping database-dependent routes - running in font-only mode.');
+      // Add a placeholder route to inform clients about missing features
+      app.get('/api/v1/auth/*', (req, res) => {
+        res.status(503).json({ error: 'Authentication features unavailable - database not connected' });
+      });
+      app.get('/api/v1/fontmatches/*', (req, res) => {
+        res.status(503).json({ error: 'Font matching history unavailable - database not connected' });
+      });
+    }
 
     // Specific routes for HTML files
     app.get('/', (req, res) => {

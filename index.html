@@ -201,9 +201,16 @@
                     <p class="section-description en">Explore our extensive collection of fonts in both languages</p>
                     <p class="section-description he">גלה את אוסף הגופנים הנרחב שלנו בשתי השפות</p>
                     
-                    <div class="language-tabs">
-                        <button id="showcase-en-tab" class="tab active" data-lang="en">English</button>
-                        <button id="showcase-he-tab" class="tab" data-lang="he">עברית</button>
+                    <div class="showcase-controls">
+                        <div class="language-tabs">
+                            <button id="showcase-en-tab" class="tab active" data-lang="en">English</button>
+                            <button id="showcase-he-tab" class="tab" data-lang="he">עברית</button>
+                        </div>
+                        <button id="browse-fonts-btn" class="btn btn-secondary">
+                            <i class="fas fa-search"></i>
+                            <span class="en">Browse All Fonts</span>
+                            <span class="he">עיין בכל הגופנים</span>
+                        </button>
                     </div>
                     
                     <div id="font-samples-container" class="font-samples-container">
@@ -318,10 +325,49 @@
         </div>
     </template>
 
+    <!-- Font Search Modal -->
+    <div class="font-search-container" style="display: none;" id="font-search-container">
+        <div class="font-search-modal">
+            <div class="search-header">
+                <input type="text" 
+                       id="font-search-input" 
+                       placeholder="Search fonts... (e.g., David, Rubik, Bold)" 
+                       class="font-search-input">
+                <button id="close-search" class="close-search-btn">×</button>
+            </div>
+            <div class="search-filters">
+                <select id="category-filter">
+                    <option value="">All Categories</option>
+                    <option value="serif">Serif</option>
+                    <option value="sans-serif">Sans-serif</option>
+                    <option value="monospace">Monospace</option>
+                    <option value="handwriting">Handwriting</option>
+                    <option value="display">Display</option>
+                    <option value="decorative">Decorative</option>
+                </select>
+                <select id="weight-filter">
+                    <option value="">All Weights</option>
+                    <option value="thin">Thin</option>
+                    <option value="light">Light</option>
+                    <option value="regular">Regular</option>
+                    <option value="medium">Medium</option>
+                    <option value="bold">Bold</option>
+                    <option value="heavy">Heavy</option>
+                </select>
+                <button id="clear-filters">Clear Filters</button>
+            </div>
+            <div class="search-results" id="font-search-results">
+                <div class="search-stats" id="search-stats"></div>
+                <div class="font-list" id="font-list"></div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
     <script src="js/debug-console.js"></script>
     <script src="js/seo.js"></script>
     <script src="js/fonts.js"></script>
+    <script src="js/font-search.js"></script>
     <script src="js/translation.js"></script>
     <script src="js/mock-server.js"></script>
     <script src="js/auth.js"></script>

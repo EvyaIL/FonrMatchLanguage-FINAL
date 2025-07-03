@@ -1,0 +1,326 @@
+<!-- Font Search Feature -->
+<div class="font-search-container" style="display: none;" id="font-search-container">
+    <div class="search-header">
+        <input type="text" 
+               id="font-search-input" 
+               placeholder="Search fonts... (e.g., David, Rubik, Bold)" 
+               class="font-search-input">
+        <button id="close-search" class="close-search-btn">×</button>
+    </div>
+    <div class="search-filters">
+        <select id="category-filter">
+            <option value="">All Categories</option>
+            <option value="serif">Serif</option>
+            <option value="sans-serif">Sans-serif</option>
+            <option value="monospace">Monospace</option>
+            <option value="handwriting">Handwriting</option>
+            <option value="display">Display</option>
+            <option value="decorative">Decorative</option>
+        </select>
+        <select id="weight-filter">
+            <option value="">All Weights</option>
+            <option value="thin">Thin</option>
+            <option value="light">Light</option>
+            <option value="regular">Regular</option>
+            <option value="medium">Medium</option>
+            <option value="bold">Bold</option>
+            <option value="heavy">Heavy</option>
+        </select>
+        <button id="clear-filters">Clear Filters</button>
+    </div>
+    <div class="search-results" id="font-search-results">
+        <div class="search-stats" id="search-stats"></div>
+        <div class="font-list" id="font-list"></div>
+    </div>
+</div>
+
+<style>
+.font-search-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.font-search-container > div {
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 800px;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.search-header {
+    display: flex;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.font-search-input {
+    flex: 1;
+    padding: 12px 16px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+    outline: none;
+}
+
+.font-search-input:focus {
+    border-color: #007bff;
+}
+
+.close-search-btn {
+    margin-left: 15px;
+    background: #f5f5f5;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-size: 24px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.close-search-btn:hover {
+    background: #e0e0e0;
+}
+
+.search-filters {
+    display: flex;
+    gap: 10px;
+    padding: 15px 20px;
+    border-bottom: 1px solid #eee;
+    background: #f9f9f9;
+}
+
+.search-filters select, .search-filters button {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: white;
+}
+
+.search-filters button {
+    background: #007bff;
+    color: white;
+    border-color: #007bff;
+    cursor: pointer;
+}
+
+.search-filters button:hover {
+    background: #0056b3;
+}
+
+.search-results {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.search-stats {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.font-list {
+    display: grid;
+    gap: 10px;
+}
+
+.font-item {
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.font-item:hover {
+    border-color: #007bff;
+    background: #f8f9ff;
+}
+
+.font-item-name {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.font-item-meta {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 8px;
+}
+
+.font-item-preview {
+    font-size: 16px;
+    color: #333;
+}
+
+.font-item-preview.hebrew {
+    direction: rtl;
+    text-align: right;
+}
+</style>
+
+<script>
+class FontSearchManager {
+    constructor(fontManager) {
+        this.fontManager = fontManager;
+        this.allFonts = [];
+        this.filteredFonts = [];
+        this.currentLanguage = 'he';
+        this.hebrewSample = "שלום עולם! אבגד הוזח טיכל";
+        this.englishSample = "Hello World! The quick brown fox";
+        
+        this.searchContainer = document.getElementById('font-search-container');
+        this.searchInput = document.getElementById('font-search-input');
+        this.categoryFilter = document.getElementById('category-filter');
+        this.weightFilter = document.getElementById('weight-filter');
+        this.clearFiltersBtn = document.getElementById('clear-filters');
+        this.closeSearchBtn = document.getElementById('close-search');
+        this.searchStats = document.getElementById('search-stats');
+        this.fontList = document.getElementById('font-list');
+        
+        this.setupEventListeners();
+    }
+    
+    setupEventListeners() {
+        this.searchInput.addEventListener('input', () => this.performSearch());
+        this.categoryFilter.addEventListener('change', () => this.performSearch());
+        this.weightFilter.addEventListener('change', () => this.performSearch());
+        this.clearFiltersBtn.addEventListener('click', () => this.clearFilters());
+        this.closeSearchBtn.addEventListener('click', () => this.hide());
+        
+        // Close on background click
+        this.searchContainer.addEventListener('click', (e) => {
+            if (e.target === this.searchContainer) {
+                this.hide();
+            }
+        });
+        
+        // Close on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.searchContainer.style.display !== 'none') {
+                this.hide();
+            }
+        });
+    }
+    
+    show(language = 'he') {
+        this.currentLanguage = language;
+        this.allFonts = this.fontManager.getFontsForLanguage(language);
+        this.searchContainer.style.display = 'flex';
+        this.searchInput.focus();
+        this.performSearch();
+    }
+    
+    hide() {
+        this.searchContainer.style.display = 'none';
+    }
+    
+    clearFilters() {
+        this.searchInput.value = '';
+        this.categoryFilter.value = '';
+        this.weightFilter.value = '';
+        this.performSearch();
+    }
+    
+    performSearch() {
+        const searchTerm = this.searchInput.value.toLowerCase().trim();
+        const categoryFilter = this.categoryFilter.value;
+        const weightFilter = this.weightFilter.value;
+        
+        this.filteredFonts = this.allFonts.filter(font => {
+            const matchesSearch = !searchTerm || 
+                font.name.toLowerCase().includes(searchTerm) ||
+                (font.style && font.style.toLowerCase().includes(searchTerm)) ||
+                (font.category && font.category.toLowerCase().includes(searchTerm));
+            
+            const matchesCategory = !categoryFilter || font.category === categoryFilter;
+            const matchesWeight = !weightFilter || font.weight === weightFilter;
+            
+            return matchesSearch && matchesCategory && matchesWeight;
+        });
+        
+        this.displayResults();
+    }
+    
+    displayResults() {
+        const resultCount = this.filteredFonts.length;
+        const totalCount = this.allFonts.length;
+        
+        this.searchStats.textContent = `Showing ${resultCount} of ${totalCount} ${this.currentLanguage === 'he' ? 'Hebrew' : 'English'} fonts`;
+        
+        this.fontList.innerHTML = '';
+        
+        // Limit results for performance
+        const maxResults = 100;
+        const fontsToShow = this.filteredFonts.slice(0, maxResults);
+        
+        if (resultCount > maxResults) {
+            this.searchStats.textContent += ` (displaying first ${maxResults})`;
+        }
+        
+        fontsToShow.forEach(font => {
+            const fontItem = document.createElement('div');
+            fontItem.className = 'font-item';
+            fontItem.addEventListener('click', () => this.selectFont(font));
+            
+            const sampleText = this.currentLanguage === 'he' ? this.hebrewSample : this.englishSample;
+            const directionClass = this.currentLanguage === 'he' ? 'hebrew' : 'english';
+            
+            fontItem.innerHTML = `
+                <div class="font-item-name">${font.name}</div>
+                <div class="font-item-meta">
+                    ${font.category || 'unknown'} • ${font.style || 'unknown'} • ${font.weight || 'unknown'}
+                    ${font.file ? ' • Local file' : ' • System font'}
+                </div>
+                <div class="font-item-preview ${directionClass}" style="font-family: '${font.name}', Arial, sans-serif;">
+                    ${sampleText}
+                </div>
+            `;
+            
+            this.fontList.appendChild(fontItem);
+        });
+        
+        if (resultCount === 0) {
+            this.fontList.innerHTML = '<div style="text-align: center; color: #666; padding: 40px;">No fonts found matching your criteria.</div>';
+        }
+    }
+    
+    selectFont(font) {
+        // Load the font if needed
+        if (font.file && this.fontManager.loadFontFile) {
+            this.fontManager.loadFontFile(font).catch(console.warn);
+        }
+        
+        // Set the font in the dropdown
+        const sourceFont = document.getElementById('source-font');
+        if (sourceFont) {
+            sourceFont.value = font.name;
+            sourceFont.dispatchEvent(new Event('change'));
+        }
+        
+        this.hide();
+        console.log(`Selected font: ${font.name}`);
+    }
+}
+
+// Initialize search manager when font manager is ready
+window.fontSearchManager = null;
+</script>
