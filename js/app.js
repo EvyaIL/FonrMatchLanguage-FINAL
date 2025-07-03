@@ -94,6 +94,9 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // Run initialization
     init();
+    
+    // Initialize rich text editor after DOM is ready
+    initializeRichTextEditor();
 
     function initializeFontPicker() {
         console.log("=== INITIALIZING FONT PICKER ===");
@@ -299,9 +302,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         sourceLanguage.value = targetLanguage.value;
         targetLanguage.value = tempLang;
         
-        const tempText = sourceText.value;
-        sourceText.value = targetText.value;
-        targetText.value = tempText;
+        const tempText = getRichTextContent('source-text');
+        setRichTextContent('source-text', getRichTextContent('target-text'));
+        setRichTextContent('target-text', tempText);
 
         updateFontOptions();
         updatePlaceholders();
@@ -317,10 +320,10 @@ document.addEventListener('DOMContentLoaded', async function() {
         const sourceLang = sourceLanguage.value;
         const targetLang = targetLanguage.value;
         
-        sourceText.placeholder = sourceLang === 'en' ? 'Enter text in English' : 'הזן טקסט בעברית';
-        targetText.placeholder = targetLang === 'en' ? 'Enter text in English' : 'הזן טקסט בעברית';
+        sourceText.setAttribute('data-placeholder', sourceLang === 'en' ? 'Enter text in English' : 'הזן טקסט בעברית');
+        targetText.setAttribute('data-placeholder', targetLang === 'en' ? 'Enter text in English' : 'הזן טקסט בעברית');
 
-        // Apply the currently selected font to the textarea
+        // Apply the currently selected font to the text editor
         if (sourceFont && sourceFont.value) {
             previewFont(sourceFont.value, sourceText);
         }
@@ -333,8 +336,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         const sourceLang = sourceLanguage.value;
         const targetLang = targetLanguage.value;
         const selectedFont = sourceFont.value; // Use HTML select value instead of Choices.js
-        const inputText = sourceText.value || getDefaultText(sourceLang);
-        const targetInputText = targetText.value || getDefaultText(targetLang);
+        const inputText = getPlainTextContent('source-text') || getDefaultText(sourceLang);
+        const targetInputText = getPlainTextContent('target-text') || getDefaultText(targetLang);
         
         if (!inputText.trim()) {
             alert('Please enter some text to match fonts');
@@ -366,8 +369,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                     displayFontComparison(
                         selectedFont, 
                         matchedFont, 
-                        inputText, 
-                        targetInputText,
+                        getRichTextContent('source-text') || inputText, 
+                        getRichTextContent('target-text') || targetInputText,
                         sourceLang,
                         targetLang
                     );
@@ -541,5 +544,99 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     function getDefaultText(lang) {
         return lang === 'he' ? 'טקסט לדוגמה בעברית' : 'Sample text in English';
+    }
+
+    // Rich Text Editor Functionality
+    function initializeRichTextEditor() {
+        const formatButtons = document.querySelectorAll('.format-btn');
+        const richTextEditors = document.querySelectorAll('.rich-text-editor');
+        
+        // Add event listeners to formatting buttons
+        formatButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const command = this.getAttribute('data-command');
+                executeFormatCommand(command, this);
+            });
+        });
+        
+        // Add keyboard shortcuts
+        richTextEditors.forEach(editor => {
+            editor.addEventListener('keydown', function(e) {
+                if (e.ctrlKey || e.metaKey) {
+                    switch(e.key.toLowerCase()) {
+                        case 'b':
+                            e.preventDefault();
+                            executeFormatCommand('bold');
+                            break;
+                        case 'i':
+                            e.preventDefault();
+                            executeFormatCommand('italic');
+                            break;
+                        case 'u':
+                            e.preventDefault();
+                            executeFormatCommand('underline');
+                            break;
+                    }
+                }
+            });
+            
+            // Update toolbar state when selection changes
+            editor.addEventListener('input', updateToolbarState);
+            editor.addEventListener('keyup', updateToolbarState);
+            editor.addEventListener('mouseup', updateToolbarState);
+            editor.addEventListener('focus', updateToolbarState);
+        });
+    }
+    
+    function executeFormatCommand(command, button = null) {
+        document.execCommand(command, false, null);
+        updateToolbarState();
+        
+        // Keep focus in editor
+        const activeEditor = document.activeElement;
+        if (activeEditor && activeEditor.classList.contains('rich-text-editor')) {
+            activeEditor.focus();
+        }
+    }
+    
+    function updateToolbarState() {
+        const formatButtons = document.querySelectorAll('.format-btn');
+        
+        formatButtons.forEach(button => {
+            const command = button.getAttribute('data-command');
+            if (command !== 'removeFormat') {
+                const isActive = document.queryCommandState(command);
+                button.classList.toggle('active', isActive);
+            }
+        });
+    }
+    
+    // Get text content from rich text editor (preserving formatting)
+    function getRichTextContent(editorId) {
+        const editor = document.getElementById(editorId);
+        return editor ? editor.innerHTML : '';
+    }
+    
+    // Set text content in rich text editor
+    function setRichTextContent(editorId, content) {
+        const editor = document.getElementById(editorId);
+        if (editor) {
+            editor.innerHTML = content;
+        }
+    }
+    
+    // Get plain text from rich text editor
+    function getPlainTextContent(editorId) {
+        const editor = document.getElementById(editorId);
+        return editor ? editor.textContent || editor.innerText || '' : '';
+    }
+    
+    // Set plain text in rich text editor
+    function setPlainTextContent(editorId, content) {
+        const editor = document.getElementById(editorId);
+        if (editor) {
+            editor.textContent = content;
+        }
     }
 });
