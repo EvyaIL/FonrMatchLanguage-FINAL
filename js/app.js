@@ -25,7 +25,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     const sourceLanguage = document.getElementById('source-language');
     const targetLanguage = document.getElementById('target-language');
     const sourceFont = document.getElementById('source-font');
-    let sourceFontChoices = null; // Will be initialized by Choices.js
     const targetFontSelect = null; // No target font dropdown in current design
     const sourceText = document.getElementById('source-text');
     const aboutButton = document.getElementById('about-button');
@@ -105,15 +104,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             return;
         }
         
-        // Destroy existing instance
-        if (sourceFontChoices) {
-            try {
-                sourceFontChoices.destroy();
-                console.log("Destroyed existing Choices.js instance.");
-            } catch (e) {
-                console.error("Error destroying Choices.js instance:", e);
-            }
-        }
+        // Note: We're now using a simple HTML select, so no need to destroy anything
 
         const lang = sourceLanguage.value;
         console.log(`Current language: ${lang}`);
@@ -131,8 +122,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
         console.log(`Found ${fonts.length} fonts for ${lang}:`, fonts.map(f => f.name));
 
-        // SIMPLE APPROACH: Use basic HTML select first
-        console.log("Using basic HTML select dropdown...");
+        // SMART APPROACH: Use basic HTML select with lazy font loading
+        console.log("Using basic HTML select dropdown with lazy loading...");
         sourceFont.innerHTML = ''; // Clear existing options
         
         // Add default option
@@ -149,6 +140,19 @@ document.addEventListener('DOMContentLoaded', async function() {
             sourceFont.appendChild(option);
         });
         
+        // Lazy load fonts when dropdown is opened
+        let fontsLoaded = false;
+        sourceFont.addEventListener('focus', async function() {
+            if (!fontsLoaded && window.fontManager.loadFontsLazily) {
+                console.log('Loading fonts lazily on first dropdown interaction...');
+                const currentFonts = window.fontManager.getFontsForLanguage(lang);
+                const fontNames = currentFonts.map(f => f.name);
+                await window.fontManager.loadFontsLazily(fontNames);
+                fontsLoaded = true;
+                console.log('Fonts loaded successfully!');
+            }
+        });
+        
         // Set up event listener
         sourceFont.addEventListener('change', function() {
             console.log(`Font selected: ${this.value}`);
@@ -157,6 +161,15 @@ document.addEventListener('DOMContentLoaded', async function() {
                 updatePlaceholders();
             }
         });
+        
+        // Load popular fonts immediately for better initial experience
+        if (window.fontManager.loadPopularFonts) {
+            window.fontManager.loadPopularFonts().then(() => {
+                console.log('Popular fonts loaded for immediate use');
+            }).catch(err => {
+                console.warn('Failed to load popular fonts:', err);
+            });
+        }
         
         // Set initial font
         if (fonts.length > 0) {
@@ -239,9 +252,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (sourceLanguage.value !== lang) {
             sourceLanguage.value = lang;
             targetLanguage.value = lang === 'en' ? 'he' : 'en';
-            if (sourceFontChoices) {
-                 updateFontOptions();
-            }
+            updateFontOptions();
         }
         
         updateUIText(lang);
@@ -263,11 +274,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     function updateFontOptions() {
-        if (!sourceFontChoices) {
-            console.error('updateFontOptions called before Choices.js was initialized.');
-            return;
-        }
-
         if (!fontManager || typeof fontManager.getFontsForLanguage !== 'function') {
             console.error('FontManager not available in updateFontOptions');
             return;
@@ -282,25 +288,10 @@ document.addEventListener('DOMContentLoaded', async function() {
             return;
         }
         
-        const choicesArray = fonts.map(font => ({
-            value: font.name,
-            label: font.name,
-            customProperties: { fontFamily: `'${font.name}', sans-serif` }
-        }));
-
-        try {
-            sourceFontChoices.setChoices(choicesArray, 'value', 'label', true);
-
-            if (fonts.length > 0) {
-                sourceFontChoices.setChoiceByValue(fonts[0].name);
-                previewFont(fonts[0].name, sourceText);
-            }
-            
-            updatePlaceholders();
-            console.log(`Font options updated successfully. ${fonts.length} fonts available.`);
-        } catch (error) {
-            console.error('Error updating font options:', error);
-        }
+        // Reinitialize the font picker with new language fonts
+        initializeFontPicker();
+        
+        console.log(`Font options updated successfully. ${fonts.length} fonts available.`);
     }
 
     function swapLanguages() {
@@ -329,11 +320,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         sourceText.placeholder = sourceLang === 'en' ? 'Enter text in English' : 'הזן טקסט בעברית';
         targetText.placeholder = targetLang === 'en' ? 'Enter text in English' : 'הזן טקסט בעברית';
 
-        if (sourceFontChoices) {
-            const selectedValue = sourceFontChoices.getValue(true);
-            if (selectedValue) {
-                previewFont(selectedValue, sourceText);
-            }
+        // Apply the currently selected font to the textarea
+        if (sourceFont && sourceFont.value) {
+            previewFont(sourceFont.value, sourceText);
         }
         if (targetFontSelect && targetFontSelect.value) {
             previewFont(targetFontSelect.value, targetText);
@@ -343,7 +332,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     function findMatchingFont() {
         const sourceLang = sourceLanguage.value;
         const targetLang = targetLanguage.value;
-        const selectedFont = sourceFontChoices.getValue(true);
+        const selectedFont = sourceFont.value; // Use HTML select value instead of Choices.js
         const inputText = sourceText.value || getDefaultText(sourceLang);
         const targetInputText = targetText.value || getDefaultText(targetLang);
         

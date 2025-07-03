@@ -32,18 +32,17 @@ class FontManager {
     }
 
     async initialize() {
-        console.log('FontManager: Full initialization started.');
+        console.log('FontManager: Fast initialization started.');
         // Fetch English font list first
         await this.fetchEnglishFontsList();
         console.log('FontManager: Font list fetched.');
         
-        // Now, set up all font data, pairings, vectors, etc.
+        // Set up all font data, pairings, vectors, etc.
         this.setupFontData();
         console.log('FontManager: Font data setup complete.');
 
-        // Finally, load the fonts and wait for the process to complete
-        await this.loadAllFonts();
-        console.log('FontManager: All fonts loaded and active.');
+        // DON'T load fonts here - we'll load them lazily when needed
+        console.log('FontManager: Initialization complete (fonts will load on-demand).');
     }
 
     // New method to set up all data structures
@@ -153,63 +152,55 @@ class FontManager {
         }
     }
 
-    // New method dedicated to loading fonts with WebFontLoader
-    async loadAllFonts() {
-        const allFonts = [...this.englishFonts.map(f => f.name), ...this.hebrewFonts.map(f => f.name)];
-        const uniqueFonts = [...new Set(allFonts)];
+    // Lazy loading method - loads fonts only when needed
+    async loadFontsLazily(fontNames) {
+        const fontsToLoad = fontNames.filter(name => !this.loadedFonts || !this.loadedFonts.has(name));
+        
+        if (fontsToLoad.length === 0) {
+            console.log('All requested fonts already loaded');
+            return;
+        }
 
-        console.log(`Loading ${uniqueFonts.length} unique fonts...`);
+        console.log(`Lazy loading ${fontsToLoad.length} fonts...`);
 
         if (typeof WebFont === 'undefined') {
             console.error('WebFontLoader is not available.');
             return;
         }
 
-        // Load fonts in batches to avoid timeout issues with large font lists
-        const batchSize = 100;
-        const batches = [];
-        for (let i = 0; i < uniqueFonts.length; i += batchSize) {
-            batches.push(uniqueFonts.slice(i, i + batchSize));
+        // Initialize loadedFonts set if it doesn't exist
+        if (!this.loadedFonts) {
+            this.loadedFonts = new Set();
         }
 
-        console.log(`Loading fonts in ${batches.length} batches of ${batchSize} fonts each`);
-
         return new Promise((resolve) => {
-            let loadedBatches = 0;
-            
-            const loadBatch = (batchIndex) => {
-                if (batchIndex >= batches.length) {
-                    console.log('All font batches loaded successfully!');
-                    document.dispatchEvent(new Event('fonts-loaded'));
+            WebFont.load({
+                google: {
+                    families: fontsToLoad
+                },
+                active: () => {
+                    console.log(`Successfully loaded ${fontsToLoad.length} fonts`);
+                    fontsToLoad.forEach(font => this.loadedFonts.add(font));
                     resolve();
-                    return;
-                }
-
-                const batch = batches[batchIndex];
-                console.log(`Loading batch ${batchIndex + 1}/${batches.length} with ${batch.length} fonts`);
-                
-                WebFont.load({
-                    google: {
-                        families: batch
-                    },
-                    active: () => {
-                        loadedBatches++;
-                        console.log(`Batch ${batchIndex + 1} loaded successfully`);
-                        // Load next batch
-                        setTimeout(() => loadBatch(batchIndex + 1), 100);
-                    },
-                    inactive: () => {
-                        console.warn(`Batch ${batchIndex + 1} failed to load, continuing anyway`);
-                        // Continue with next batch even if this one fails
-                        setTimeout(() => loadBatch(batchIndex + 1), 100);
-                    },
-                    timeout: 15000  // 15 second timeout per batch
-                });
-            };
-
-            // Start loading the first batch
-            loadBatch(0);
+                },
+                inactive: () => {
+                    console.warn(`Some fonts failed to load, but continuing`);
+                    fontsToLoad.forEach(font => this.loadedFonts.add(font)); // Mark as attempted
+                    resolve();
+                },
+                timeout: 8000  // 8 second timeout
+            });
         });
+    }
+
+    // Load the most popular fonts upfront (for immediate availability)
+    async loadPopularFonts() {
+        const popularFonts = this.englishFonts.slice(0, 20).map(f => f.name);
+        const hebrewFonts = this.hebrewFonts.map(f => f.name);
+        const allPopular = [...popularFonts, ...hebrewFonts];
+        
+        console.log('Loading most popular fonts for immediate use...');
+        await this.loadFontsLazily(allPopular);
     }
 
     // Generate a simulated feature vector for a font based on its characteristics
