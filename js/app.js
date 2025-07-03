@@ -553,8 +553,13 @@ document.addEventListener('DOMContentLoaded', async function() {
         
         // Add event listeners to formatting buttons
         formatButtons.forEach(button => {
+            button.addEventListener('mousedown', function(e) {
+                e.preventDefault(); // Prevent button from taking focus
+            });
+            
             button.addEventListener('click', function(e) {
                 e.preventDefault();
+                e.stopPropagation();
                 const command = this.getAttribute('data-command');
                 executeFormatCommand(command, this);
             });
@@ -590,13 +595,79 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
     
     function executeFormatCommand(command, button = null) {
+        // Find the closest rich text editor to the button that was clicked
+        let activeEditor = null;
+        
+        if (button) {
+            // Find the editor in the same container as the button
+            const toolbar = button.closest('.formatting-toolbar');
+            if (toolbar) {
+                const textEditor = toolbar.parentElement.querySelector('.rich-text-editor');
+                if (textEditor) {
+                    activeEditor = textEditor;
+                }
+            }
+        }
+        
+        // Fallback: try to get the currently focused editor
+        if (!activeEditor) {
+            const focusedElement = document.activeElement;
+            if (focusedElement && focusedElement.classList.contains('rich-text-editor')) {
+                activeEditor = focusedElement;
+            }
+        }
+        
+        // Fallback: find any editor that has content or was recently focused
+        if (!activeEditor) {
+            const editors = document.querySelectorAll('.rich-text-editor');
+            for (let editor of editors) {
+                if (editor.textContent.trim() || editor === document.querySelector('.rich-text-editor:focus')) {
+                    activeEditor = editor;
+                    break;
+                }
+            }
+            // If still no editor found, use the first one
+            if (!activeEditor && editors.length > 0) {
+                activeEditor = editors[0];
+            }
+        }
+        
+        if (!activeEditor) {
+            console.warn('No rich text editor found to apply formatting');
+            return;
+        }
+        
+        // Focus the editor
+        activeEditor.focus();
+        
+        // Check if there's any selected text
+        const selection = window.getSelection();
+        const selectedText = selection.toString();
+        
+        // If no text is selected and the editor has content, select all content
+        if (!selectedText && activeEditor.textContent.trim()) {
+            const range = document.createRange();
+            range.selectNodeContents(activeEditor);
+            selection.removeAllRanges();
+            selection.addRange(range);
+        }
+        
+        // Execute the formatting command
         document.execCommand(command, false, null);
         updateToolbarState();
         
         // Keep focus in editor
-        const activeEditor = document.activeElement;
-        if (activeEditor && activeEditor.classList.contains('rich-text-editor')) {
-            activeEditor.focus();
+        activeEditor.focus();
+        
+        // Move cursor to the end after formatting (except for removeFormat)
+        if (command !== 'removeFormat') {
+            setTimeout(() => {
+                const range = document.createRange();
+                range.selectNodeContents(activeEditor);
+                range.collapse(false); // Move to end
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }, 10);
         }
     }
     
