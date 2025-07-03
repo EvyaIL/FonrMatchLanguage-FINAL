@@ -122,73 +122,22 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
         console.log(`Found ${fonts.length} fonts for ${lang}:`, fonts.map(f => f.name));
 
-        // SMART APPROACH: Use HTML select with efficient loading for large font collections
-        console.log("Using optimized HTML select dropdown for large font collection...");
+        // SMART APPROACH: Use basic HTML select with lazy font loading
+        console.log("Using basic HTML select dropdown with lazy loading...");
         sourceFont.innerHTML = ''; // Clear existing options
         
         // Add default option
         const defaultOption = document.createElement('option');
         defaultOption.value = '';
-        defaultOption.textContent = `Select a font... (${fonts.length} available)`;
+        defaultOption.textContent = 'Select a font...';
         sourceFont.appendChild(defaultOption);
         
-        // For large collections, prioritize popular fonts and add a search feature
-        const maxInitialFonts = 200; // Limit initial load for performance
-        const popularFonts = fonts.slice(0, maxInitialFonts);
-        
-        // Add popular fonts first
-        popularFonts.forEach(font => {
+        fonts.forEach(font => {
             const option = document.createElement('option');
             option.value = font.name;
             option.textContent = font.name;
             option.style.fontFamily = `'${font.name}', sans-serif`;
             sourceFont.appendChild(option);
-        });
-        
-        // Add "load more fonts" option if there are more fonts
-        if (fonts.length > maxInitialFonts) {
-            const loadMoreOption = document.createElement('option');
-            loadMoreOption.value = '__load_more__';
-            loadMoreOption.textContent = `── Load ${fonts.length - maxInitialFonts} more fonts ──`;
-            loadMoreOption.style.fontStyle = 'italic';
-            loadMoreOption.style.backgroundColor = '#f0f0f0';
-            sourceFont.appendChild(loadMoreOption);
-        }
-        
-        // Handle "load more" functionality
-        let allFontsLoaded = fonts.length <= maxInitialFonts;
-        sourceFont.addEventListener('change', function() {
-            if (this.value === '__load_more__') {
-                console.log('Loading remaining fonts...');
-                // Remove the "load more" option
-                const loadMoreOption = sourceFont.querySelector('option[value="__load_more__"]');
-                if (loadMoreOption) {
-                    loadMoreOption.remove();
-                }
-                
-                // Add remaining fonts
-                const remainingFonts = fonts.slice(maxInitialFonts);
-                remainingFonts.forEach(font => {
-                    const option = document.createElement('option');
-                    option.value = font.name;
-                    option.textContent = font.name;
-                    option.style.fontFamily = `'${font.name}', sans-serif`;
-                    sourceFont.appendChild(option);
-                });
-                
-                allFontsLoaded = true;
-                console.log(`Loaded all ${fonts.length} fonts`);
-                
-                // Reset selection
-                this.value = '';
-                return;
-            }
-            
-            if (this.value) {
-                console.log(`Font selected: ${this.value}`);
-                previewFont(this.value, sourceText);
-                updatePlaceholders();
-            }
         });
         
         // Lazy load fonts when dropdown is opened
@@ -197,10 +146,19 @@ document.addEventListener('DOMContentLoaded', async function() {
             if (!fontsLoaded && window.fontManager.loadFontsLazily) {
                 console.log('Loading fonts lazily on first dropdown interaction...');
                 const currentFonts = window.fontManager.getFontsForLanguage(lang);
-                const fontNames = currentFonts.slice(0, maxInitialFonts).map(f => f.name);
+                const fontNames = currentFonts.map(f => f.name);
                 await window.fontManager.loadFontsLazily(fontNames);
                 fontsLoaded = true;
-                console.log('Popular fonts loaded successfully!');
+                console.log('Fonts loaded successfully!');
+            }
+        });
+        
+        // Set up event listener
+        sourceFont.addEventListener('change', function() {
+            console.log(`Font selected: ${this.value}`);
+            if (this.value) {
+                previewFont(this.value, sourceText);
+                updatePlaceholders();
             }
         });
         

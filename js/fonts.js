@@ -5,146 +5,22 @@ const GOOGLE_FONTS_API_KEY = 'AIzaSyCb_xsID8SNCyNdnkX5d5T5UBE6RuksuZw';
 class FontManager {
     constructor() {
         this.englishFonts = [];
-        this.hebrewFonts = [];
-        this.allLocalFonts = [];
-        this.fontsLoaded = false;
-        this.maxFontsPerLanguage = 1000; // Limit for performance
-        
-        // Fallback fonts if local manifest fails
-        this.fallbackHebrewFonts = [
-            // Popular Google Fonts with Hebrew support
+        this.hebrewFonts = [
             { name: 'Heebo', category: 'sans-serif', style: 'modern', weight: 'variable' },
             { name: 'Assistant', category: 'sans-serif', style: 'friendly', weight: 'variable' },
             { name: 'Rubik', category: 'sans-serif', style: 'geometric', weight: 'variable' },
-            { name: 'Alef', category: 'sans-serif', style: 'modern', weight: 'regular' },
-            { name: 'Amatic SC', category: 'handwriting', style: 'casual', weight: 'regular' },
-            { name: 'Arimo', category: 'sans-serif', style: 'technical', weight: 'variable' },
-            { name: 'Bellefair', category: 'serif', style: 'elegant', weight: 'regular' },
-            { name: 'Cousine', category: 'monospace', style: 'technical', weight: 'regular' },
-            { name: 'David Libre', category: 'serif', style: 'classic', weight: 'regular' },
             { name: 'Frank Ruhl Libre', category: 'serif', style: 'elegant', weight: 'variable' },
-            { name: 'M PLUS 1p', category: 'sans-serif', style: 'modern', weight: 'variable' },
-            { name: 'M PLUS Rounded 1c', category: 'sans-serif', style: 'friendly', weight: 'variable' },
-            { name: 'Miriam Libre', category: 'sans-serif', style: 'legible', weight: 'regular' },
+            { name: 'David Libre', category: 'serif', style: 'classic', weight: 'regular' },
             { name: 'Noto Sans Hebrew', category: 'sans-serif', style: 'balanced', weight: 'variable' },
             { name: 'Noto Serif Hebrew', category: 'serif', style: 'readable', weight: 'variable' },
-            { name: 'Open Sans Hebrew', category: 'sans-serif', style: 'friendly', weight: 'variable' },
-            { name: 'Secular One', category: 'sans-serif', style: 'modern', weight: 'regular' },
-            { name: 'Suez One', category: 'serif', style: 'strong', weight: 'regular' },
-            { name: 'Tinos', category: 'serif', style: 'classic', weight: 'regular' },
-            { name: 'Varela Round', category: 'sans-serif', style: 'friendly', weight: 'regular' },
-            { name: 'Work Sans', category: 'sans-serif', style: 'modern', weight: 'variable' },
-            
-            // Additional Hebrew fonts (some may be system fonts)
             { name: 'Arial Hebrew', category: 'sans-serif', style: 'neutral', weight: 'regular' },
-            { name: 'Times New Roman Hebrew', category: 'serif', style: 'classic', weight: 'regular' },
-            { name: 'Lucida Grande Hebrew', category: 'sans-serif', style: 'clean', weight: 'regular' },
-            { name: 'Helvetica Hebrew', category: 'sans-serif', style: 'modern', weight: 'regular' },
-            { name: 'Gill Sans Hebrew', category: 'sans-serif', style: 'humanist', weight: 'regular' },
-            { name: 'Optima Hebrew', category: 'sans-serif', style: 'elegant', weight: 'regular' },
-            { name: 'Palatino Hebrew', category: 'serif', style: 'elegant', weight: 'regular' },
-            { name: 'Georgia Hebrew', category: 'serif', style: 'readable', weight: 'regular' },
-            { name: 'Verdana Hebrew', category: 'sans-serif', style: 'screen', weight: 'regular' },
-            { name: 'Trebuchet MS Hebrew', category: 'sans-serif', style: 'modern', weight: 'regular' },
-            { name: 'Comic Sans MS Hebrew', category: 'handwriting', style: 'casual', weight: 'regular' },
-            { name: 'Impact Hebrew', category: 'sans-serif', style: 'bold', weight: 'bold' },
-            
-            // Traditional Hebrew fonts
             { name: 'Miriam', category: 'sans-serif', style: 'legible', weight: 'regular' },
             { name: 'Gisha', category: 'sans-serif', style: 'screen', weight: 'regular' },
             { name: 'Aharoni', category: 'sans-serif', style: 'strong', weight: 'bold' },
-            { name: 'Rod', category: 'sans-serif', style: 'bold', weight: 'bold' },
-            { name: 'Narkisim', category: 'serif', style: 'traditional', weight: 'regular' },
-            { name: 'Jerusalem', category: 'serif', style: 'decorative', weight: 'regular' },
-            { name: 'Fixed Miriam Transparent', category: 'monospace', style: 'technical', weight: 'regular' },
-            { name: 'Courier New Hebrew', category: 'monospace', style: 'technical', weight: 'regular' },
-            
-            // Modern Hebrew fonts
-            { name: 'Karantina', category: 'display', style: 'decorative', weight: 'variable' },
-            { name: 'Bellota Text', category: 'sans-serif', style: 'friendly', weight: 'regular' },
-            { name: 'Rubik Mono One', category: 'monospace', style: 'modern', weight: 'regular' },
-            { name: 'Rubik Microbe', category: 'display', style: 'decorative', weight: 'regular' },
-            { name: 'Bellota', category: 'display', style: 'playful', weight: 'regular' },
-            
-            // Additional Traditional & Classic Hebrew fonts from local collection
-            { name: 'David', category: 'serif', style: 'classic', weight: 'regular' },
-            { name: 'David Bold', category: 'serif', style: 'classic', weight: 'bold' },
-            { name: 'Hadassah', category: 'serif', style: 'elegant', weight: 'regular' },
-            { name: 'Hadassah Bold', category: 'serif', style: 'elegant', weight: 'bold' },
-            { name: 'Frank Ruhl', category: 'serif', style: 'traditional', weight: 'regular' },
-            { name: 'Frank Bold', category: 'serif', style: 'traditional', weight: 'bold' },
-            { name: 'Koren', category: 'serif', style: 'scholarly', weight: 'regular' },
-            { name: 'Koren Bold', category: 'serif', style: 'scholarly', weight: 'bold' },
-            { name: 'Vilna', category: 'serif', style: 'traditional', weight: 'regular' },
-            { name: 'Vilna Bold', category: 'serif', style: 'traditional', weight: 'bold' },
-            { name: 'Rashi', category: 'serif', style: 'commentary', weight: 'regular' },
-            { name: 'Rashi Bold', category: 'serif', style: 'commentary', weight: 'bold' },
-            { name: 'Stam', category: 'serif', style: 'ceremonial', weight: 'regular' },
-            { name: 'Stamfont', category: 'serif', style: 'ceremonial', weight: 'regular' },
-            
-            // Modern Sans-Serif Hebrew fonts
-            { name: 'Guttman David', category: 'sans-serif', style: 'modern', weight: 'regular' },
-            { name: 'Guttman David Bold', category: 'sans-serif', style: 'modern', weight: 'bold' },
-            { name: 'Guttman Aharoni', category: 'sans-serif', style: 'strong', weight: 'bold' },
-            { name: 'Guttman Hatzvi', category: 'sans-serif', style: 'modern', weight: 'regular' },
-            { name: 'Guttman Kav', category: 'sans-serif', style: 'technical', weight: 'regular' },
-            { name: 'Guttman Kav Bold', category: 'sans-serif', style: 'technical', weight: 'bold' },
-            { name: 'Guttman Myamfix', category: 'monospace', style: 'technical', weight: 'regular' },
-            { name: 'Levenim MT', category: 'sans-serif', style: 'clean', weight: 'regular' },
-            { name: 'Levenim MT Bold', category: 'sans-serif', style: 'clean', weight: 'bold' },
-            
-            // Decorative & Display Hebrew fonts
-            { name: 'Peigneli', category: 'display', style: 'decorative', weight: 'regular' },
-            { name: 'Peigneli Bold', category: 'display', style: 'decorative', weight: 'bold' },
-            { name: 'Aharoni Bold', category: 'display', style: 'strong', weight: 'bold' },
-            { name: 'Ktav Hebrew', category: 'handwriting', style: 'handwritten', weight: 'regular' },
-            { name: 'Ktav Yad', category: 'handwriting', style: 'handwritten', weight: 'regular' },
-            { name: 'Krembo', category: 'display', style: 'playful', weight: 'regular' },
-            { name: 'Gulim', category: 'sans-serif', style: 'screen', weight: 'regular' },
-            { name: 'Batang', category: 'serif', style: 'formal', weight: 'regular' },
-            
-            // Contemporary Hebrew fonts
-            { name: 'Tahoma Hebrew', category: 'sans-serif', style: 'screen', weight: 'regular' },
-            { name: 'Segoe UI Hebrew', category: 'sans-serif', style: 'modern', weight: 'regular' },
-            { name: 'Calibri Hebrew', category: 'sans-serif', style: 'clean', weight: 'regular' },
-            { name: 'Arial Unicode MS', category: 'sans-serif', style: 'universal', weight: 'regular' },
-            { name: 'Microsoft Sans Serif', category: 'sans-serif', style: 'neutral', weight: 'regular' },
-            
-            // Specialized Hebrew fonts
-            { name: 'Hebrew Rap', category: 'display', style: 'modern', weight: 'bold' },
-            { name: 'Agudat Israel', category: 'serif', style: 'traditional', weight: 'regular' },
-            { name: 'Oron', category: 'sans-serif', style: 'geometric', weight: 'variable' },
-            { name: 'Oron Bold', category: 'sans-serif', style: 'geometric', weight: 'bold' },
-            { name: 'Secular', category: 'sans-serif', style: 'modern', weight: 'regular' },
-            { name: 'Gveret', category: 'serif', style: 'elegant', weight: 'regular' },
-            { name: 'Narkis Tam', category: 'serif', style: 'traditional', weight: 'regular' },
-            
-            // Vintage & Classic Hebrew fonts
-            { name: 'Narkis Classic', category: 'serif', style: 'classic', weight: 'regular' },
-            { name: 'Narkis Block', category: 'display', style: 'bold', weight: 'bold' },
-            { name: 'Toledo', category: 'serif', style: 'traditional', weight: 'regular' },
-            { name: 'Toledo Bold', category: 'serif', style: 'traditional', weight: 'bold' },
-            { name: 'Soncino', category: 'serif', style: 'traditional', weight: 'regular' },
-            { name: 'Soncino Bold', category: 'serif', style: 'traditional', weight: 'bold' },
-            { name: 'Mantova', category: 'serif', style: 'decorative', weight: 'regular' },
-            { name: 'Mantova Bold', category: 'serif', style: 'decorative', weight: 'bold' },
-            
-            // Modern Display & Fun Hebrew fonts
-            { name: 'BN Modern', category: 'display', style: 'modern', weight: 'regular' },
-            { name: 'BN Modern Bold', category: 'display', style: 'modern', weight: 'bold' },
-            { name: 'BN Concept', category: 'display', style: 'futuristic', weight: 'regular' },
-            { name: 'BN Digital', category: 'display', style: 'digital', weight: 'regular' },
-            { name: 'Almog', category: 'handwriting', style: 'casual', weight: 'regular' },
-            { name: 'Amnon', category: 'handwriting', style: 'playful', weight: 'regular' },
-            { name: 'Comic Hebrew', category: 'handwriting', style: 'comic', weight: 'regular' },
-            { name: 'Graffiti Hebrew', category: 'display', style: 'urban', weight: 'bold' }
+            { name: 'Secular One', category: 'sans-serif', style: 'modern', weight: 'regular' },
+            { name: 'Suez One', category: 'serif', style: 'strong', weight: 'regular' },
+            { name: 'Arimo', category: 'sans-serif', style: 'technical', weight: 'variable' }
         ];
-        
-        // Store fallback fonts for when local fonts fail to load
-        this.fallbackHebrewFonts = [...this.hebrewFonts];
-        this.allLocalFonts = [];
-        this.fontsLoaded = false;
-        this.maxFontsPerLanguage = 1000; // Limit for performance
         
         this.fontPairings = {};
         this.sampleTexts = {};
@@ -156,148 +32,23 @@ class FontManager {
     }
 
     async initialize() {
-        console.log('FontManager: Initializing with local font collection...');
-        
-        try {
-            // Try to load from local manifest first
-            await this.loadLocalFonts();
-            console.log(`FontManager: Loaded ${this.englishFonts.length} English and ${this.hebrewFonts.length} Hebrew fonts from local collection.`);
-        } catch (error) {
-            console.warn('FontManager: Failed to load local fonts, falling back to Google Fonts:', error);
-            // Fallback to Google Fonts
-            await this.fetchEnglishFontsList();
-            this.hebrewFonts = this.fallbackHebrewFonts;
-        }
+        console.log('FontManager: Fast initialization started.');
+        // Fetch English font list first
+        await this.fetchEnglishFontsList();
+        console.log('FontManager: Font list fetched.');
         
         // Set up all font data, pairings, vectors, etc.
         this.setupFontData();
         console.log('FontManager: Font data setup complete.');
 
-        // Mark fonts as loaded
-        this.fontsLoaded = true;
+        // DON'T load fonts here - we'll load them lazily when needed
         console.log('FontManager: Initialization complete (fonts will load on-demand).');
-    }
-
-    /**
-     * Load fonts from local manifest files
-     */
-    async loadLocalFonts() {
-        try {
-            const response = await fetch('/public/fonts/fonts-compact.json');
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            
-            const data = await response.json();
-            this.allLocalFonts = data.fonts || [];
-            
-            // Separate fonts by language and limit for performance
-            const englishFonts = this.allLocalFonts
-                .filter(font => font.lang === 'en')
-                .sort((a, b) => a.name.localeCompare(b.name))
-                .slice(0, this.maxFontsPerLanguage);
-                
-            const hebrewFonts = this.allLocalFonts
-                .filter(font => font.lang === 'he')
-                .sort((a, b) => a.name.localeCompare(b.name))
-                .slice(0, this.maxFontsPerLanguage);
-            
-            this.englishFonts = englishFonts;
-            this.hebrewFonts = hebrewFonts;
-            
-            console.log(`FontManager: Loaded ${englishFonts.length} English fonts and ${hebrewFonts.length} Hebrew fonts from local collection`);
-            
-        } catch (error) {
-            console.error('FontManager: Error loading local fonts:', error);
-            throw error;
-        }
-    }
-
-    /**
-     * Load a specific font file and add CSS
-     */
-    loadFontFile(font) {
-        if (!font.file) {
-            console.warn('FontManager: Font file path missing for:', font.name);
-            return Promise.resolve();
-        }
-
-        return new Promise((resolve, reject) => {
-            // Check if font is already loaded
-            const existingStyle = document.querySelector(`style[data-font="${font.name}"]`);
-            if (existingStyle) {
-                resolve();
-                return;
-            }
-
-            // Create CSS for font-face
-            const fontPath = `/public/fonts/${font.file}`;
-            const fontFamily = font.name;
-            
-            // Determine font-weight and font-style from font data
-            let fontWeight = 'normal';
-            let fontStyle = 'normal';
-            
-            if (font.weight === 'bold' || font.weight === 'heavy') fontWeight = 'bold';
-            else if (font.weight === 'light' || font.weight === 'thin') fontWeight = '300';
-            else if (font.weight === 'medium') fontWeight = '500';
-            
-            if (font.name.toLowerCase().includes('italic')) fontStyle = 'italic';
-
-            const css = `
-                @font-face {
-                    font-family: "${fontFamily}";
-                    src: url("${fontPath}") format("${this.getFormat(font.extension)}");
-                    font-weight: ${fontWeight};
-                    font-style: ${fontStyle};
-                    font-display: swap;
-                }
-            `;
-
-            // Add CSS to document
-            const style = document.createElement('style');
-            style.setAttribute('data-font', font.name);
-            style.textContent = css;
-            document.head.appendChild(style);
-
-            // Test if font loaded successfully
-            setTimeout(() => {
-                const testElement = document.createElement('div');
-                testElement.style.fontFamily = `"${fontFamily}", Arial, sans-serif`;
-                testElement.style.position = 'absolute';
-                testElement.style.left = '-9999px';
-                testElement.textContent = 'Test';
-                document.body.appendChild(testElement);
-                
-                // Clean up test element
-                setTimeout(() => {
-                    document.body.removeChild(testElement);
-                }, 100);
-                
-                resolve();
-            }, 100);
-        });
-    }
-
-    /**
-     * Get CSS format string for font extension
-     */
-    getFormat(extension) {
-        switch (extension.toLowerCase()) {
-            case '.woff2': return 'woff2';
-            case '.woff': return 'woff';
-            case '.ttf': return 'truetype';
-            case '.otf': return 'opentype';
-            case '.eot': return 'embedded-opentype';
-            default: return 'truetype';
-        }
     }
 
     // New method to set up all data structures
     setupFontData() {
         // Improved font pairings for more accurate matching
         this.fontPairings = {
-            // English to Hebrew mappings
             'Inter': 'Heebo',
             'Open Sans': 'Assistant',
             'Roboto': 'Noto Sans Hebrew',
@@ -310,54 +61,10 @@ class FontManager {
             'Arial': 'Arial Hebrew',
             'Verdana': 'Gisha',
             'Tahoma': 'Miriam',
-            'Courier New': 'Courier New Hebrew',
+            'Courier New': 'Miriam',
             'Trebuchet MS': 'Assistant',
             'Garamond': 'David Libre',
-            'Helvetica': 'Helvetica Hebrew',
-            'Comic Sans MS': 'Comic Sans MS Hebrew',
-            'Impact': 'Impact Hebrew',
-            'Palatino': 'Palatino Hebrew',
-            'Optima': 'Optima Hebrew',
-            'Gill Sans': 'Gill Sans Hebrew',
-            'Lucida Grande': 'Lucida Grande Hebrew',
-            'Work Sans': 'Work Sans',
-            'Varela Round': 'Varela Round',
-            'Amatic SC': 'Amatic SC',
-            'Bellefair': 'Bellefair',
-            'Cousine': 'Cousine',
-            'Tinos': 'Tinos',
-            'M PLUS 1p': 'M PLUS 1p',
-            'M PLUS Rounded 1c': 'M PLUS Rounded 1c',
             
-            // Additional English to Hebrew mappings for better variety
-            'Source Sans Pro': 'Guttman David',
-            'PT Sans': 'Levenim MT',
-            'Raleway': 'Secular',
-            'Nunito': 'Assistant',
-            'Poppins': 'Heebo',
-            'Lora': 'David',
-            'Source Serif Pro': 'Koren',
-            'PT Serif': 'Hadassah',
-            'Crimson Text': 'Frank Ruhl',
-            'EB Garamond': 'Vilna',
-            'Libre Baskerville': 'Toledo',
-            'Cormorant Garamond': 'Soncino',
-            'Abril Fatface': 'Peigneli Bold',
-            'Oswald': 'Oron Bold',
-            'Fjalla One': 'Hebrew Rap',
-            'Anton': 'Narkis Block',
-            'Staatliches': 'BN Modern Bold',
-            'Space Mono': 'Guttman Myamfix',
-            'JetBrains Mono': 'Fixed Miriam Transparent',
-            'Fira Code': 'Courier New Hebrew',
-            'Dancing Script': 'Ktav Yad',
-            'Pacifico': 'Krembo',
-            'Kalam': 'Almog',
-            'Caveat': 'Amnon',
-            'Satisfy': 'Comic Hebrew',
-            'Bangers': 'Graffiti Hebrew',
-            
-            // Hebrew to English mappings
             'Heebo': 'Inter',
             'Assistant': 'Open Sans',
             'Rubik': 'Montserrat',
@@ -371,124 +78,7 @@ class FontManager {
             'Aharoni': 'Arial Black',
             'Secular One': 'Montserrat',
             'Suez One': 'Georgia',
-            'Arimo': 'Arial',
-            'Alef': 'Open Sans',
-            'Miriam Libre': 'Open Sans',
-            'Open Sans Hebrew': 'Open Sans',
-            'Times New Roman Hebrew': 'Times New Roman',
-            'Helvetica Hebrew': 'Helvetica',
-            'Comic Sans MS Hebrew': 'Comic Sans MS',
-            'Impact Hebrew': 'Impact',
-            'Palatino Hebrew': 'Palatino',
-            'Optima Hebrew': 'Optima',
-            'Gill Sans Hebrew': 'Gill Sans',
-            'Lucida Grande Hebrew': 'Lucida Grande',
-            'Georgia Hebrew': 'Georgia',
-            'Verdana Hebrew': 'Verdana',
-            'Trebuchet MS Hebrew': 'Trebuchet MS',
-            'Courier New Hebrew': 'Courier New',
-            'Work Sans': 'Work Sans',
-            'Varela Round': 'Varela Round',
-            'Amatic SC': 'Amatic SC',
-            'Bellefair': 'Bellefair',
-            'Cousine': 'Cousine',
-            'Tinos': 'Tinos',
-            'M PLUS 1p': 'M PLUS 1p',
-            'M PLUS Rounded 1c': 'M PLUS Rounded 1c',
-            'Rod': 'Impact',
-            'Narkisim': 'Times New Roman',
-            'Jerusalem': 'Palatino',
-            'Fixed Miriam Transparent': 'Courier New',
-            'Karantina': 'Amatic SC',
-            'Bellota Text': 'Open Sans',
-            'Bellota': 'Comic Sans MS',
-            'Rubik Mono One': 'Courier New',
-            'Rubik Microbe': 'Impact',
-            
-            // New Hebrew fonts mappings
-            'David': 'Georgia',
-            'David Bold': 'Georgia',
-            'Hadassah': 'Playfair Display',
-            'Hadassah Bold': 'Playfair Display',
-            'Frank Ruhl': 'Times New Roman',
-            'Frank Bold': 'Times New Roman',
-            'Koren': 'Times New Roman',
-            'Koren Bold': 'Times New Roman',
-            'Vilna': 'Times New Roman',
-            'Vilna Bold': 'Times New Roman',
-            'Rashi': 'Times New Roman',
-            'Rashi Bold': 'Times New Roman',
-            'Stam': 'Times New Roman',
-            'Stamfont': 'Times New Roman',
-            'Guttman David': 'Open Sans',
-            'Guttman David Bold': 'Open Sans',
-            'Guttman Aharoni': 'Arial Black',
-            'Guttman Hatzvi': 'Roboto',
-            'Guttman Kav': 'Arial',
-            'Guttman Kav Bold': 'Arial',
-            'Guttman Myamfix': 'Courier New',
-            'Levenim MT': 'Calibri',
-            'Levenim MT Bold': 'Calibri',
-            'Peigneli': 'Playfair Display',
-            'Peigneli Bold': 'Playfair Display',
-            'Aharoni Bold': 'Arial Black',
-            'Ktav Hebrew': 'Comic Sans MS',
-            'Ktav Yad': 'Comic Sans MS',
-            'Krembo': 'Comic Sans MS',
-            'Gulim': 'Verdana',
-            'Batang': 'Times New Roman',
-            'Tahoma Hebrew': 'Tahoma',
-            'Segoe UI Hebrew': 'Segoe UI',
-            'Calibri Hebrew': 'Calibri',
-            'Arial Unicode MS': 'Arial',
-            'Microsoft Sans Serif': 'Microsoft Sans Serif',
-            'Hebrew Rap': 'Impact',
-            'Agudat Israel': 'Times New Roman',
-            'Oron': 'Montserrat',
-            'Oron Bold': 'Montserrat',
-            'Secular': 'Open Sans',
-            'Gveret': 'Georgia',
-            'Narkis Tam': 'Times New Roman',
-            'Narkis Classic': 'Times New Roman',
-            'Narkis Block': 'Impact',
-            'Toledo': 'Times New Roman',
-            'Toledo Bold': 'Times New Roman',
-            'Soncino': 'Times New Roman',
-            'Soncino Bold': 'Times New Roman',
-            'Mantova': 'Palatino',
-            'Mantova Bold': 'Palatino',
-            'BN Modern': 'Roboto',
-            'BN Modern Bold': 'Roboto',
-            'BN Concept': 'Futura',
-            'BN Digital': 'Courier New',
-            'Almog': 'Comic Sans MS',
-            'Amnon': 'Comic Sans MS',
-            'Comic Hebrew': 'Comic Sans MS',
-            'Graffiti Hebrew': 'Impact',
-            
-            // Reverse mappings for additional variety
-            'Guttman David': 'Source Sans Pro',
-            'Levenim MT': 'PT Sans',
-            'Secular': 'Raleway',
-            'David': 'Lora',
-            'Koren': 'Source Serif Pro',
-            'Hadassah': 'PT Serif',
-            'Frank Ruhl': 'Crimson Text',
-            'Vilna': 'EB Garamond',
-            'Toledo': 'Libre Baskerville',
-            'Soncino': 'Cormorant Garamond',
-            'Peigneli Bold': 'Abril Fatface',
-            'Oron Bold': 'Oswald',
-            'Hebrew Rap': 'Fjalla One',
-            'Narkis Block': 'Anton',
-            'BN Modern Bold': 'Staatliches',
-            'Guttman Myamfix': 'Space Mono',
-            'Ktav Yad': 'Dancing Script',
-            'Krembo': 'Pacifico',
-            'Almog': 'Kalam',
-            'Amnon': 'Caveat',
-            'Comic Hebrew': 'Satisfy',
-            'Graffiti Hebrew': 'Bangers'
+            'Arimo': 'Arial'
         };
         
         // Sample text for demonstrating fonts (improved for readability)
@@ -562,70 +152,45 @@ class FontManager {
         }
     }
 
-    // Lazy loading method - loads fonts only when needed (updated for local fonts)
+    // Lazy loading method - loads fonts only when needed
     async loadFontsLazily(fontNames) {
-        if (!this.loadedFonts) {
-            this.loadedFonts = new Set();
-        }
-
-        const fontsToLoad = fontNames.filter(name => !this.loadedFonts.has(name));
+        const fontsToLoad = fontNames.filter(name => !this.loadedFonts || !this.loadedFonts.has(name));
         
         if (fontsToLoad.length === 0) {
             console.log('All requested fonts already loaded');
             return;
         }
 
-        console.log(`Lazy loading ${fontsToLoad.length} local fonts...`);
+        console.log(`Lazy loading ${fontsToLoad.length} fonts...`);
 
-        const loadPromises = [];
-
-        for (const fontName of fontsToLoad) {
-            // Find font in our local collection
-            const font = this.allLocalFonts.find(f => f.name === fontName) ||
-                        this.englishFonts.find(f => f.name === fontName) ||
-                        this.hebrewFonts.find(f => f.name === fontName);
-
-            if (font && font.file) {
-                // Load local font file
-                const loadPromise = this.loadFontFile(font).then(() => {
-                    this.loadedFonts.add(fontName);
-                    console.log(`✅ Loaded local font: ${fontName}`);
-                }).catch(error => {
-                    console.warn(`⚠️  Failed to load local font ${fontName}:`, error);
-                    // Still mark as attempted to avoid retry loops
-                    this.loadedFonts.add(fontName);
-                });
-                loadPromises.push(loadPromise);
-            } else {
-                // Fallback to Google Fonts for missing local fonts
-                if (typeof WebFont !== 'undefined') {
-                    const fallbackPromise = new Promise((resolve) => {
-                        WebFont.load({
-                            google: { families: [fontName] },
-                            active: () => {
-                                this.loadedFonts.add(fontName);
-                                console.log(`✅ Loaded fallback Google font: ${fontName}`);
-                                resolve();
-                            },
-                            inactive: () => {
-                                this.loadedFonts.add(fontName);
-                                console.warn(`⚠️  Failed to load Google font: ${fontName}`);
-                                resolve();
-                            },
-                            timeout: 5000
-                        });
-                    });
-                    loadPromises.push(fallbackPromise);
-                } else {
-                    console.warn(`⚠️  Font not found locally and WebFont not available: ${fontName}`);
-                    this.loadedFonts.add(fontName);
-                }
-            }
+        if (typeof WebFont === 'undefined') {
+            console.error('WebFontLoader is not available.');
+            return;
         }
 
-        // Wait for all fonts to load
-        await Promise.all(loadPromises);
-        console.log(`✅ Completed loading ${fontsToLoad.length} fonts`);
+        // Initialize loadedFonts set if it doesn't exist
+        if (!this.loadedFonts) {
+            this.loadedFonts = new Set();
+        }
+
+        return new Promise((resolve) => {
+            WebFont.load({
+                google: {
+                    families: fontsToLoad
+                },
+                active: () => {
+                    console.log(`Successfully loaded ${fontsToLoad.length} fonts`);
+                    fontsToLoad.forEach(font => this.loadedFonts.add(font));
+                    resolve();
+                },
+                inactive: () => {
+                    console.warn(`Some fonts failed to load, but continuing`);
+                    fontsToLoad.forEach(font => this.loadedFonts.add(font)); // Mark as attempted
+                    resolve();
+                },
+                timeout: 8000  // 8 second timeout
+            });
+        });
     }
 
     // Load the most popular fonts upfront (for immediate availability)
