@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Font Dropdown Debug</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css"/>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .debug-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        .error { color: red; }
+        .success { color: green; }
+        .info { color: blue; }
+    </style>
+</head>
+<body>
+    <h1>Font Dropdown Debug Page</h1>
+    
+    <div class="debug-section">
+        <h2>Dependencies Check</h2>
+        <div id="deps-status"></div>
+    </div>
+    
+    <div class="debug-section">
+        <h2>Font Selection Test</h2>
+        <label for="test-source-language">Language:</label>
+        <select id="test-source-language">
+            <option value="en">English</option>
+            <option value="he">עברית</option>
+        </select>
+        
+        <label for="test-source-font">Font:</label>
+        <select id="test-source-font">
+            <option value="">Loading...</option>
+        </select>
+        
+        <div id="font-status"></div>
+    </div>
+    
+    <div class="debug-section">
+        <h2>Console Messages</h2>
+        <div id="console-output" style="background: #f5f5f5; padding: 10px; height: 200px; overflow-y: auto;"></div>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+    <script src="js/fonts.js"></script>
+    <script src="js/translation.js"></script>
+    <script>
+        // Capture console messages
+        const consoleOutput = document.getElementById('console-output');
+        const originalLog = console.log;
+        const originalError = console.error;
+        
+        function addToConsole(message, type = 'log') {
+            const div = document.createElement('div');
+            div.className = type === 'error' ? 'error' : type === 'success' ? 'success' : 'info';
+            div.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            consoleOutput.appendChild(div);
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        }
+        
+        console.log = function(...args) {
+            addToConsole(args.join(' '), 'info');
+            originalLog.apply(console, args);
+        };
+        
+        console.error = function(...args) {
+            addToConsole(args.join(' '), 'error');
+            originalError.apply(console, args);
+        };
+        
+        // Check dependencies
+        function checkDependencies() {
+            const depsStatus = document.getElementById('deps-status');
+            let status = '';
+            
+            if (typeof WebFont !== 'undefined') {
+                status += '<div class="success">✓ WebFontLoader loaded</div>';
+            } else {
+                status += '<div class="error">✗ WebFontLoader not loaded</div>';
+            }
+            
+            if (typeof Choices !== 'undefined') {
+                status += '<div class="success">✓ Choices.js loaded</div>';
+            } else {
+                status += '<div class="error">✗ Choices.js not loaded</div>';
+            }
+            
+            if (typeof FontManager !== 'undefined') {
+                status += '<div class="success">✓ FontManager class loaded</div>';
+            } else {
+                status += '<div class="error">✗ FontManager class not loaded</div>';
+            }
+            
+            depsStatus.innerHTML = status;
+        }
+        
+        // Test font loading
+        async function testFontLoading() {
+            const fontStatus = document.getElementById('font-status');
+            const sourceLanguage = document.getElementById('test-source-language');
+            const sourceFont = document.getElementById('test-source-font');
+            
+            try {
+                console.log('Creating FontManager instance...');
+                const fontManager = new FontManager();
+                
+                console.log('Initializing FontManager...');
+                await fontManager.initialize();
+                
+                console.log('FontManager initialized successfully');
+                
+                function updateFonts() {
+                    const lang = sourceLanguage.value;
+                    console.log(`Getting fonts for language: ${lang}`);
+                    
+                    const fonts = fontManager.getFontsForLanguage(lang);
+                    console.log(`Found ${fonts.length} fonts:`, fonts.slice(0, 5).map(f => f.name));
+                    
+                    // Clear existing options
+                    sourceFont.innerHTML = '';
+                    
+                    fonts.forEach(font => {
+                        const option = document.createElement('option');
+                        option.value = font.name;
+                        option.textContent = font.name;
+                        sourceFont.appendChild(option);
+                    });
+                    
+                    fontStatus.innerHTML = `<div class="success">✓ Loaded ${fonts.length} fonts for ${lang}</div>`;
+                    
+                    // Initialize Choices.js
+                    if (typeof Choices !== 'undefined') {
+                        try {
+                            const choices = new Choices(sourceFont, {
+                                searchEnabled: true,
+                                shouldSort: false
+                            });
+                            console.log('Choices.js initialized successfully');
+                        } catch (e) {
+                            console.error('Choices.js initialization failed:', e);
+                        }
+                    }
+                }
+                
+                sourceLanguage.addEventListener('change', updateFonts);
+                updateFonts(); // Initial load
+                
+            } catch (error) {
+                console.error('Font loading test failed:', error);
+                fontStatus.innerHTML = `<div class="error">✗ Font loading failed: ${error.message}</div>`;
+            }
+        }
+        
+        // Run tests
+        document.addEventListener('DOMContentLoaded', () => {
+            checkDependencies();
+            setTimeout(testFontLoading, 100);
+        });
+    </script>
+</body>
+</html>

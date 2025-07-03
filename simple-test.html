@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Dropdown Test</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css"/>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+    </style>
+</head>
+<body>
+    <h1>Simple Dropdown Test</h1>
+    
+    <div class="test-section">
+        <h2>Basic Select (no JS enhancement)</h2>
+        <select id="basic-select">
+            <option value="en">English</option>
+            <option value="he">עברית</option>
+        </select>
+    </div>
+    
+    <div class="test-section">
+        <h2>Choices.js Enhanced Select</h2>
+        <select id="choices-select">
+            <option value="">Select an option...</option>
+            <option value="roboto">Roboto</option>
+            <option value="opensans">Open Sans</option>
+            <option value="lato">Lato</option>
+        </select>
+    </div>
+    
+    <div class="test-section">
+        <h2>Status</h2>
+        <div id="status"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const status = document.getElementById('status');
+            
+            function updateStatus(message) {
+                const div = document.createElement('div');
+                div.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+                status.appendChild(div);
+            }
+            
+            updateStatus('Page loaded');
+            
+            // Test basic select
+            const basicSelect = document.getElementById('basic-select');
+            basicSelect.addEventListener('change', function() {
+                updateStatus(`Basic select changed to: ${this.value}`);
+            });
+            
+            // Test Choices.js
+            if (typeof Choices !== 'undefined') {
+                updateStatus('Choices.js is available');
+                
+                try {
+                    const choicesSelect = document.getElementById('choices-select');
+                    const choices = new Choices(choicesSelect, {
+                        searchEnabled: true,
+                        shouldSort: false,
+                        itemSelectText: '',
+                        placeholderValue: 'Select a font'
+                    });
+                    
+                    updateStatus('Choices.js instance created successfully');
+                    
+                    choicesSelect.addEventListener('change', function(event) {
+                        updateStatus(`Choices select changed to: ${event.detail.value}`);
+                    });
+                    
+                } catch (error) {
+                    updateStatus(`Choices.js error: ${error.message}`);
+                }
+            } else {
+                updateStatus('Choices.js is NOT available');
+            }
+        });
+    </script>
+</body>
+</html>

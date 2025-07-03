@@ -4,10 +4,7 @@ const GOOGLE_FONTS_API_KEY = 'AIzaSyCb_xsID8SNCyNdnkX5d5T5UBE6RuksuZw';
 
 class FontManager {
     constructor() {
-        // Fetch English font list dynamically from Google Fonts API
         this.englishFonts = [];
-        this.fetchEnglishFonts();
-
         this.hebrewFonts = [
             { name: 'Heebo', category: 'sans-serif', style: 'modern', weight: 'variable' },
             { name: 'Assistant', category: 'sans-serif', style: 'friendly', weight: 'variable' },
@@ -25,6 +22,32 @@ class FontManager {
             { name: 'Arimo', category: 'sans-serif', style: 'technical', weight: 'variable' }
         ];
         
+        this.fontPairings = {};
+        this.sampleTexts = {};
+        this.extendedSampleTexts = {};
+        this.fontVectors = {};
+        this.matchConfig = {};
+        this.matchCache = {};
+        this.matchScoreCache = {};
+    }
+
+    async initialize() {
+        console.log('FontManager: Full initialization started.');
+        // Fetch English font list first
+        await this.fetchEnglishFontsList();
+        console.log('FontManager: Font list fetched.');
+        
+        // Now, set up all font data, pairings, vectors, etc.
+        this.setupFontData();
+        console.log('FontManager: Font data setup complete.');
+
+        // Finally, load the fonts and wait for the process to complete
+        await this.loadAllFonts();
+        console.log('FontManager: All fonts loaded and active.');
+    }
+
+    // New method to set up all data structures
+    setupFontData() {
         // Improved font pairings for more accurate matching
         this.fontPairings = {
             'Inter': 'Heebo',
@@ -71,9 +94,8 @@ class FontManager {
             'he': "אבגד הוזח טיכל מנסע פצקר שתץ. דג סקרן שט בים מאוכזב ולפתע מצא לו חברה. 0123456789"
         };
         
-        // Font feature vectors (for AI simulation)
+        // Generate vectors for all fonts
         this.fontVectors = {};
-        // Matching configuration: adjustable weights and threshold for composite scoring
         this.matchConfig = {
             categoryWeight: 2,
             styleWeight: 2,
@@ -82,66 +104,112 @@ class FontManager {
             thresholdFraction: 0.5, // only composite matches above 50% accepted
             directPairConfidence: 0.6 // realistic confidence for direct pairings
         };
-        // Cache for computed matches to improve performance
         this.matchCache = {};
         this.matchScoreCache = {}; // store raw scores for confidence calculation
         
-        // Generate vectors for all fonts
         [...this.englishFonts, ...this.hebrewFonts].forEach(font => {
             this.fontVectors[font.name] = this.generateFontVector(font);
         });
-        
-        this.preloadFonts();
     }
     
-    // Fetch and populate englishFonts from Google Fonts API
-    fetchEnglishFonts() {
-        fetch(`https://www.googleapis.com/webfonts/v1/webfonts?key=${GOOGLE_FONTS_API_KEY}&sort=popularity`)
-            .then(res => res.json())
-            .then(data => {
-                this.englishFonts = data.items.map(item => ({ name: item.family, category: 'sans-serif', style: 'variable', weight: 'variable' }));
+    // Renamed from fetchEnglishFonts to clarify it only fetches the list
+    async fetchEnglishFontsList() {
+        try {
+            console.log('Fetching English fonts from Google Fonts API...');
+            const response = await fetch(`https://www.googleapis.com/webfonts/v1/webfonts?key=${GOOGLE_FONTS_API_KEY}&sort=popularity`);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            console.log(`Successfully fetched ${data.items.length} fonts from Google Fonts API`);
+            
+            // Use a much larger subset of Google Fonts (500 instead of 50)
+            this.englishFonts = data.items.slice(0, 500).map(item => ({ 
+                name: item.family, 
+                category: item.category || 'sans-serif', 
+                style: 'variable', 
+                weight: 'variable' 
+            }));
+            
+            console.log(`Using ${this.englishFonts.length} English fonts`);
+        } catch (err) {
+            console.error('Failed to fetch English fonts list:', err);
+            console.log('Using fallback font list');
+            // Enhanced fallback to a larger list if API fails
+            this.englishFonts = [
+                { name: 'Roboto', category: 'sans-serif', style: 'modern', weight: 'variable' },
+                { name: 'Open Sans', category: 'sans-serif', style: 'friendly', weight: 'variable' },
+                { name: 'Lato', category: 'sans-serif', style: 'modern', weight: 'variable' },
+                { name: 'Montserrat', category: 'sans-serif', style: 'geometric', weight: 'variable' },
+                { name: 'Poppins', category: 'sans-serif', style: 'modern', weight: 'variable' },
+                { name: 'Inter', category: 'sans-serif', style: 'technical', weight: 'variable' },
+                { name: 'Playfair Display', category: 'serif', style: 'elegant', weight: 'variable' },
+                { name: 'Merriweather', category: 'serif', style: 'readable', weight: 'variable' },
+                { name: 'Georgia', category: 'serif', style: 'classic', weight: 'regular' },
+                { name: 'Arial', category: 'sans-serif', style: 'neutral', weight: 'regular' }
+            ];
+        }
+    }
 
-                // Load all fonts via a single Google Fonts API request
-                const allFonts = [...this.englishFonts.map(f => f.name), ...this.hebrewFonts.map(f => f.name)];
-                const familyParams = allFonts
-                    .map(name => name.replace(/ /g, '+'))
-                    // filter duplicates
-                    .filter((v, i, a) => a.indexOf(v) === i);
-                const link = document.createElement('link');
-                link.rel = 'stylesheet';
-                link.href = `https://fonts.googleapis.com/css2?${
-                    familyParams.map(f => `family=${f}`).join('&')
-                }&display=swap`;
-                link.onload = () => {
-                    // Wait for fonts to be fully loaded before initializing dropdown
-                    if (document.fonts && document.fonts.ready) {
-                        document.fonts.ready.then(() => {
-                            document.dispatchEvent(new Event('fonts-loaded'));
-                        });
-                    } else {
-                        document.dispatchEvent(new Event('fonts-loaded'));
-                    }
-                };
-                document.head.appendChild(link);
+    // New method dedicated to loading fonts with WebFontLoader
+    async loadAllFonts() {
+        const allFonts = [...this.englishFonts.map(f => f.name), ...this.hebrewFonts.map(f => f.name)];
+        const uniqueFonts = [...new Set(allFonts)];
 
-                // Generate vectors for new fonts
-                this.englishFonts.forEach(font => {
-                    this.fontVectors[font.name] = this.generateFontVector(font);
-                });
+        console.log(`Loading ${uniqueFonts.length} unique fonts...`);
 
-                // Populate source-font initial select if still desired (Choices will handle later)
-                const selectEl = document.getElementById('source-font');
-                if (selectEl) {
-                    selectEl.innerHTML = '';
-                    this.englishFonts.forEach(font => {
-                        const opt = document.createElement('option');
-                        opt.value = font.name;
-                        opt.textContent = font.name;
-                        selectEl.appendChild(opt);
-                    });
+        if (typeof WebFont === 'undefined') {
+            console.error('WebFontLoader is not available.');
+            return;
+        }
+
+        // Load fonts in batches to avoid timeout issues with large font lists
+        const batchSize = 100;
+        const batches = [];
+        for (let i = 0; i < uniqueFonts.length; i += batchSize) {
+            batches.push(uniqueFonts.slice(i, i + batchSize));
+        }
+
+        console.log(`Loading fonts in ${batches.length} batches of ${batchSize} fonts each`);
+
+        return new Promise((resolve) => {
+            let loadedBatches = 0;
+            
+            const loadBatch = (batchIndex) => {
+                if (batchIndex >= batches.length) {
+                    console.log('All font batches loaded successfully!');
+                    document.dispatchEvent(new Event('fonts-loaded'));
+                    resolve();
+                    return;
                 }
-            })
-            .catch(err => console.error('Failed to fetch English fonts:', err));
+
+                const batch = batches[batchIndex];
+                console.log(`Loading batch ${batchIndex + 1}/${batches.length} with ${batch.length} fonts`);
+                
+                WebFont.load({
+                    google: {
+                        families: batch
+                    },
+                    active: () => {
+                        loadedBatches++;
+                        console.log(`Batch ${batchIndex + 1} loaded successfully`);
+                        // Load next batch
+                        setTimeout(() => loadBatch(batchIndex + 1), 100);
+                    },
+                    inactive: () => {
+                        console.warn(`Batch ${batchIndex + 1} failed to load, continuing anyway`);
+                        // Continue with next batch even if this one fails
+                        setTimeout(() => loadBatch(batchIndex + 1), 100);
+                    },
+                    timeout: 15000  // 15 second timeout per batch
+                });
+            };
+
+            // Start loading the first batch
+            loadBatch(0);
+        });
     }
 
     // Generate a simulated feature vector for a font based on its characteristics
@@ -290,31 +358,6 @@ class FontManager {
         };
     }
     
-    // Preload fonts to ensure they're available
-    preloadFonts() {
-        const allFonts = [...this.englishFonts, ...this.hebrewFonts];
-        const uniqueFonts = new Set(allFonts.map(font => font.name));
-        
-        const preloadDiv = document.createElement('div');
-        preloadDiv.style.visibility = 'hidden';
-        preloadDiv.style.position = 'absolute';
-        preloadDiv.style.top = '-9999px';
-        preloadDiv.style.fontFamily = 'sans-serif';
-        
-        uniqueFonts.forEach(fontName => {
-            const span = document.createElement('span');
-            span.style.fontFamily = fontName;
-            span.textContent = 'ABCDEFGabcdefg1234567890אבגדהוזחטיכלמנסעפצקרשת';
-            preloadDiv.appendChild(span);
-        });
-        
-        document.body.appendChild(preloadDiv);
-        
-        setTimeout(() => {
-            document.body.removeChild(preloadDiv);
-        }, 3000);
-    }
-    
     // Get detailed match result: font name and confidence percentage
     matchFontDetail(sourceFont, targetLang) {
         const font = this.findMatchingFont(sourceFont, targetLang);
@@ -340,18 +383,26 @@ function areCategoriesCompatible(source, target) {
 }
 
 // Initialize font manager as a global object
-const fontManager = new FontManager();
+window.fontManager = new FontManager();
 
 // Override matchFonts function to include category-based filtering
 function matchFonts(sourceFont, targetFont) {
-    // Filter out obviously incompatible categories early
-    if (!areCategoriesCompatible(sourceFont, targetFont)) {
-        return { font: targetFont.name, confidence: 0 };
+    // Find source font manager instance
+    const fm = window.fontManager;
+    
+    // Check if both fonts exist in their respective collections
+    const sourceExists = fm.englishFonts.concat(fm.hebrewFonts).some(f => f.name === sourceFont);
+    const targetExists = fm.englishFonts.concat(fm.hebrewFonts).some(f => f.name === targetFont);
+    
+    if (!sourceExists || !targetExists) {
+        console.warn('One or both fonts not found in font manager:', sourceFont, targetFont);
+        return false;
     }
-
-    // ...existing normalization and similarity logic
     
-    // Normalize vectors, compute similarity, threshold check, etc.
+    // Get source and target font objects
+    const sourceFontObj = fm.englishFonts.find(f => f.name === sourceFont) || fm.hebrewFonts.find(f => f.name === sourceFont);
+    const targetFontObj = fm.englishFonts.find(f => f.name === targetFont) || fm.hebrewFonts.find(f => f.name === targetFont);
     
-    // ...remaining matchFonts implementation
+    // Check category compatibility
+    return areCategoriesCompatible(sourceFontObj, targetFontObj);
 }

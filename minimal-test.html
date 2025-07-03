@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minimal Dropdown Test</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css"/>
+    <style>
+        body { padding: 40px; font-family: Arial, sans-serif; }
+        .test { margin: 20px 0; padding: 20px; border: 1px solid #ddd; }
+        .result { margin: 10px 0; padding: 10px; background: #f5f5f5; }
+    </style>
+</head>
+<body>
+    <h1>Minimal Font Dropdown Test</h1>
+    
+    <div class="test">
+        <h2>Test 1: Basic HTML Select</h2>
+        <select id="test1" onchange="showResult('test1', this.value)">
+            <option value="">Choose a language...</option>
+            <option value="en">English</option>
+            <option value="he">עברית (Hebrew)</option>
+        </select>
+        <div id="result1" class="result">No selection yet</div>
+    </div>
+    
+    <div class="test">
+        <h2>Test 2: Basic Font Select</h2>
+        <select id="test2" onchange="showResult('test2', this.value)">
+            <option value="">Choose a font...</option>
+            <option value="roboto">Roboto</option>
+            <option value="opensans">Open Sans</option>
+            <option value="arial">Arial</option>
+        </select>
+        <div id="result2" class="result">No selection yet</div>
+    </div>
+    
+    <div class="test">
+        <h2>Test 3: Choices.js Enhanced Select</h2>
+        <select id="test3">
+            <option value="">Choose a font...</option>
+            <option value="roboto">Roboto</option>
+            <option value="opensans">Open Sans</option>
+            <option value="arial">Arial</option>
+            <option value="georgia">Georgia</option>
+            <option value="verdana">Verdana</option>
+        </select>
+        <div id="result3" class="result">No selection yet</div>
+        <button onclick="setupChoices()">Initialize Choices.js</button>
+    </div>
+    
+    <div class="test">
+        <h2>Test 4: Copy of Main App Structure</h2>
+        <div style="display: flex; gap: 20px; align-items: center;">
+            <div>
+                <label>Language:</label>
+                <select id="source-language" onchange="updateTargetLanguage()">
+                    <option value="en">English</option>
+                    <option value="he">עברית</option>
+                </select>
+            </div>
+            <div>
+                <label>Font:</label>
+                <select id="source-font">
+                    <option value="">Loading...</option>
+                </select>
+            </div>
+        </div>
+        <div id="result4" class="result">Waiting for interaction...</div>
+        <button onclick="setupMainAppTest()">Setup Like Main App</button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+    <script>
+        function showResult(testId, value) {
+            const resultDiv = document.getElementById('result' + testId.slice(-1));
+            resultDiv.textContent = `Selected: ${value} at ${new Date().toLocaleTimeString()}`;
+            console.log(`${testId} changed to: ${value}`);
+        }
+        
+        function setupChoices() {
+            const select = document.getElementById('test3');
+            const resultDiv = document.getElementById('result3');
+            
+            try {
+                if (typeof Choices === 'undefined') {
+                    resultDiv.textContent = 'ERROR: Choices.js is not loaded!';
+                    return;
+                }
+                
+                const choices = new Choices(select, {
+                    searchEnabled: true,
+                    shouldSort: false,
+                    itemSelectText: '',
+                    placeholderValue: 'Select a font'
+                });
+                
+                select.addEventListener('change', function(event) {
+                    resultDiv.textContent = `Choices.js Selected: ${event.detail.value} at ${new Date().toLocaleTimeString()}`;
+                    console.log('Choices.js changed to:', event.detail.value);
+                });
+                
+                resultDiv.textContent = 'Choices.js initialized successfully! Try selecting an option.';
+                
+            } catch (error) {
+                resultDiv.textContent = `ERROR: ${error.message}`;
+                console.error('Choices.js setup error:', error);
+            }
+        }
+        
+        function updateTargetLanguage() {
+            const sourceLanguage = document.getElementById('source-language');
+            const resultDiv = document.getElementById('result4');
+            resultDiv.textContent = `Language changed to: ${sourceLanguage.value}`;
+            
+            // Simulate font list update
+            const sourceFont = document.getElementById('source-font');
+            sourceFont.innerHTML = '';
+            
+            const fonts = sourceLanguage.value === 'en' 
+                ? ['Roboto', 'Open Sans', 'Lato', 'Montserrat']
+                : ['Heebo', 'Assistant', 'Rubik', 'Frank Ruhl Libre'];
+            
+            fonts.forEach(font => {
+                const option = document.createElement('option');
+                option.value = font.toLowerCase().replace(/\s+/g, '');
+                option.textContent = font;
+                sourceFont.appendChild(option);
+            });
+            
+            resultDiv.textContent += ` | Loaded ${fonts.length} fonts`;
+        }
+        
+        function setupMainAppTest() {
+            const sourceFont = document.getElementById('source-font');
+            const resultDiv = document.getElementById('result4');
+            
+            try {
+                // First populate with fonts
+                updateTargetLanguage();
+                
+                // Then try to enhance with Choices.js
+                if (typeof Choices !== 'undefined') {
+                    const choices = new Choices(sourceFont, {
+                        searchEnabled: true,
+                        shouldSort: false,
+                        itemSelectText: '',
+                        placeholderValue: 'Select a font'
+                    });
+                    
+                    sourceFont.addEventListener('change', function(event) {
+                        resultDiv.textContent = `Main App Test - Font Selected: ${event.detail.value}`;
+                    });
+                    
+                    resultDiv.textContent = 'Main app test setup complete with Choices.js enhancement!';
+                } else {
+                    sourceFont.addEventListener('change', function() {
+                        resultDiv.textContent = `Main App Test - Font Selected (basic): ${this.value}`;
+                    });
+                    
+                    resultDiv.textContent = 'Main app test setup complete (basic select only)!';
+                }
+                
+            } catch (error) {
+                resultDiv.textContent = `Main App Test ERROR: ${error.message}`;
+                console.error('Main app test error:', error);
+            }
+        }
+        
+        // Initialize language dropdown on load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Minimal test page loaded');
+            updateTargetLanguage();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dropdown Diagnostic</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css"/>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            padding: 20px; 
+            background: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        select, .choices {
+            width: 100%;
+            margin: 10px 0;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <h1>Font Dropdown Diagnostic Tool</h1>
+    
+    <div class="test-container">
+        <h2>Step 1: Dependencies Check</h2>
+        <div id="deps-status"></div>
+    </div>
+    
+    <div class="test-container">
+        <h2>Step 2: Basic HTML Select Test</h2>
+        <select id="basic-select">
+            <option value="">Select language...</option>
+            <option value="en">English</option>
+            <option value="he">עברית</option>
+        </select>
+        <div id="basic-status"></div>
+    </div>
+    
+    <div class="test-container">
+        <h2>Step 3: Font Manager Test</h2>
+        <button onclick="testFontManager()">Test Font Manager</button>
+        <div id="fontmanager-status"></div>
+    </div>
+    
+    <div class="test-container">
+        <h2>Step 4: Choices.js Test</h2>
+        <select id="choices-select">
+            <option value="">Select font...</option>
+        </select>
+        <button onclick="testChoicesJS()">Test Choices.js</button>
+        <div id="choices-status"></div>
+    </div>
+    
+    <div class="test-container">
+        <h2>Step 5: Full Integration Test</h2>
+        <button onclick="fullTest()">Run Full Test</button>
+        <div id="full-status"></div>
+    </div>
+    
+    <div class="test-container">
+        <h2>Console Log</h2>
+        <div id="console-log" class="log"></div>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+    <script src="js/fonts.js"></script>
+    <script src="js/translation.js"></script>
+    <script>
+        // Console capture
+        const consoleLog = document.getElementById('console-log');
+        const originalLog = console.log;
+        const originalError = console.error;
+        
+        function addToLog(message, type = 'log') {
+            const div = document.createElement('div');
+            div.style.color = type === 'error' ? '#d32f2f' : type === 'warn' ? '#f57c00' : '#1976d2';
+            div.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            consoleLog.appendChild(div);
+            consoleLog.scrollTop = consoleLog.scrollHeight;
+        }
+        
+        console.log = function(...args) {
+            addToLog(args.join(' '), 'log');
+            originalLog.apply(console, args);
+        };
+        
+        console.error = function(...args) {
+            addToLog(args.join(' '), 'error');
+            originalError.apply(console, args);
+        };
+        
+        function updateStatus(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.textContent = message;
+            element.appendChild(div);
+        }
+        
+        // Step 1: Check dependencies
+        function checkDependencies() {
+            console.log('Checking dependencies...');
+            
+            if (typeof WebFont !== 'undefined') {
+                updateStatus('deps-status', '✓ WebFontLoader is loaded', 'success');
+            } else {
+                updateStatus('deps-status', '✗ WebFontLoader NOT loaded', 'error');
+            }
+            
+            if (typeof Choices !== 'undefined') {
+                updateStatus('deps-status', '✓ Choices.js is loaded', 'success');
+            } else {
+                updateStatus('deps-status', '✗ Choices.js NOT loaded', 'error');
+            }
+            
+            if (typeof FontManager !== 'undefined') {
+                updateStatus('deps-status', '✓ FontManager class is loaded', 'success');
+            } else {
+                updateStatus('deps-status', '✗ FontManager class NOT loaded', 'error');
+            }
+        }
+        
+        // Step 2: Test basic select
+        function testBasicSelect() {
+            console.log('Testing basic select...');
+            const basicSelect = document.getElementById('basic-select');
+            
+            basicSelect.addEventListener('change', function() {
+                const message = `Basic select changed to: ${this.value}`;
+                console.log(message);
+                updateStatus('basic-status', message, 'success');
+            });
+            
+            updateStatus('basic-status', 'Basic select event listener added. Try changing the selection.', 'info');
+        }
+        
+        // Step 3: Test Font Manager
+        async function testFontManager() {
+            console.log('Testing FontManager...');
+            
+            try {
+                if (typeof FontManager === 'undefined') {
+                    throw new Error('FontManager class not available');
+                }
+                
+                const fontManager = new FontManager();
+                updateStatus('fontmanager-status', 'FontManager instance created', 'success');
+                
+                console.log('Initializing FontManager...');
+                await fontManager.initialize();
+                updateStatus('fontmanager-status', 'FontManager initialized successfully', 'success');
+                
+                const englishFonts = fontManager.getFontsForLanguage('en');
+                const hebrewFonts = fontManager.getFontsForLanguage('he');
+                
+                updateStatus('fontmanager-status', `English fonts: ${englishFonts.length}`, 'info');
+                updateStatus('fontmanager-status', `Hebrew fonts: ${hebrewFonts.length}`, 'info');
+                
+                if (englishFonts.length > 0) {
+                    updateStatus('fontmanager-status', `First English font: ${englishFonts[0].name}`, 'info');
+                }
+                
+                window.testFontManager = fontManager; // Store for other tests
+                
+            } catch (error) {
+                console.error('FontManager test failed:', error);
+                updateStatus('fontmanager-status', `FontManager test failed: ${error.message}`, 'error');
+            }
+        }
+        
+        // Step 4: Test Choices.js
+        function testChoicesJS() {
+            console.log('Testing Choices.js...');
+            
+            try {
+                if (typeof Choices === 'undefined') {
+                    throw new Error('Choices.js not available');
+                }
+                
+                const select = document.getElementById('choices-select');
+                
+                // Add some test options
+                select.innerHTML = `
+                    <option value="">Select font...</option>
+                    <option value="roboto">Roboto</option>
+                    <option value="opensans">Open Sans</option>
+                    <option value="lato">Lato</option>
+                `;
+                
+                const choices = new Choices(select, {
+                    searchEnabled: true,
+                    shouldSort: false,
+                    itemSelectText: '',
+                    placeholderValue: 'Select a font'
+                });
+                
+                updateStatus('choices-status', 'Choices.js instance created successfully', 'success');
+                
+                select.addEventListener('change', function(event) {
+                    const message = `Choices.js select changed to: ${event.detail.value}`;
+                    console.log(message);
+                    updateStatus('choices-status', message, 'success');
+                });
+                
+                updateStatus('choices-status', 'Event listener added. Try selecting a font.', 'info');
+                
+            } catch (error) {
+                console.error('Choices.js test failed:', error);
+                updateStatus('choices-status', `Choices.js test failed: ${error.message}`, 'error');
+            }
+        }
+        
+        // Step 5: Full integration test
+        async function fullTest() {
+            console.log('Running full integration test...');
+            
+            try {
+                // Test the exact same setup as the main app
+                if (!window.testFontManager) {
+                    updateStatus('full-status', 'FontManager not initialized. Run FontManager test first.', 'error');
+                    return;
+                }
+                
+                const fontManager = window.testFontManager;
+                const fonts = fontManager.getFontsForLanguage('en');
+                
+                if (fonts.length === 0) {
+                    throw new Error('No fonts available for testing');
+                }
+                
+                updateStatus('full-status', `Testing with ${fonts.length} fonts`, 'info');
+                
+                // Create a test select element
+                const testSelect = document.createElement('select');
+                testSelect.id = 'integration-test-select';
+                testSelect.innerHTML = '<option value="">Loading fonts...</option>';
+                
+                const container = document.getElementById('full-status');
+                container.appendChild(testSelect);
+                
+                // Populate with actual fonts
+                testSelect.innerHTML = '';
+                fonts.slice(0, 10).forEach(font => {  // Limit to first 10 for testing
+                    const option = document.createElement('option');
+                    option.value = font.name;
+                    option.textContent = font.name;
+                    testSelect.appendChild(option);
+                });
+                
+                updateStatus('full-status', 'Basic dropdown populated with fonts', 'success');
+                
+                // Test Choices.js enhancement
+                if (typeof Choices !== 'undefined') {
+                    const choices = new Choices(testSelect, {
+                        searchEnabled: true,
+                        shouldSort: false,
+                        itemSelectText: '',
+                        placeholderValue: 'Select a font',
+                        classNames: {
+                            containerOuter: 'choices font-picker-container',
+                        }
+                    });
+                    
+                    updateStatus('full-status', 'Choices.js enhancement applied successfully', 'success');
+                    
+                    testSelect.addEventListener('change', function(event) {
+                        const message = `Full test: Font selected: ${event.detail.value}`;
+                        console.log(message);
+                        updateStatus('full-status', message, 'success');
+                    });
+                    
+                    updateStatus('full-status', 'Integration test complete! Try selecting a font.', 'success');
+                } else {
+                    updateStatus('full-status', 'Choices.js not available for enhancement', 'error');
+                }
+                
+            } catch (error) {
+                console.error('Full integration test failed:', error);
+                updateStatus('full-status', `Full test failed: ${error.message}`, 'error');
+            }
+        }
+        
+        // Initialize tests
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Diagnostic page loaded');
+            checkDependencies();
+            testBasicSelect();
+        });
+    </script>
+</body>
+</html>

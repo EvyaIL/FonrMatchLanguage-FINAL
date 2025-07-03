@@ -1,5 +1,7 @@
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize managers - check if they exist globally first
+document.addEventListener('DOMContentLoaded', async function() {
+    console.log('=== APP INITIALIZATION START ===');
+    
+    // Initialize managers
     const fontManager = window.fontManager || new FontManager();
     const uiManager = window.uiManager || new UIManager();
     const translationService = window.translationService || new TranslationService();
@@ -8,6 +10,12 @@ document.addEventListener('DOMContentLoaded', function() {
     window.fontManager = fontManager;
     window.uiManager = uiManager;
     window.translationService = translationService;
+    
+    console.log('Managers initialized:', {
+        fontManager: !!fontManager,
+        uiManager: !!uiManager,
+        translationService: !!translationService
+    });
     
     // DOM elements with error checking
     const body = document.body;
@@ -18,7 +26,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const targetLanguage = document.getElementById('target-language');
     const sourceFont = document.getElementById('source-font');
     let sourceFontChoices = null; // Will be initialized by Choices.js
-    const targetFontSelect = document.getElementById('target-font');
+    const targetFontSelect = null; // No target font dropdown in current design
     const sourceText = document.getElementById('source-text');
     const aboutButton = document.getElementById('about-button');
     const closeModalButtons = document.querySelectorAll('.close-modal');
@@ -27,88 +35,139 @@ document.addEventListener('DOMContentLoaded', function() {
     const fontComparisonDisplay = document.getElementById('font-comparison-display');
     const matchButton = document.getElementById('match-button');
     const swapButton = document.getElementById('swap-languages');
-    
+    const loadingOverlay = document.getElementById('loading-overlay');
+    const fontName = document.getElementById('font-name');
+    console.log('DOM elements found:', {
+        body: !!body,
+        themeSwitch: !!themeSwitch,
+        sourceLanguage: !!sourceLanguage,
+        targetLanguage: !!targetLanguage,
+        sourceFont: !!sourceFont,
+        sourceText: !!sourceText,
+        matchButton: !!matchButton,
+        swapButton: !!swapButton
+    });
+
     // Check for missing critical elements
     if (!sourceLanguage || !targetLanguage || !sourceFont || !sourceText || !matchButton) {
-        console.error('Critical DOM elements missing for font matching');
+        console.error('Critical DOM elements missing for font matching:', {
+            sourceLanguage: !!sourceLanguage,
+            targetLanguage: !!targetLanguage,
+            sourceFont: !!sourceFont,
+            sourceText: !!sourceText,
+            matchButton: !!matchButton
+        });
         return;
     }
+    
+    console.log('All critical DOM elements found successfully');
 
-    // Debounce function to limit how often a function is called
-    function debounce(func, wait) {
-        let timeout;
-        return function(...args) {
-            const context = this;
-            clearTimeout(timeout);
-            timeout = setTimeout(() => func.apply(context, args), wait);
-        };
-    }
-
-    // Initialize the page
-    init();
-
-    function init() {
-        // Set initial language
+    // Main initialization function
+    async function init() {
+        console.log('Starting app initialization...');
+        
+        // Set initial language and theme first
         setLanguage(localStorage.getItem('language') || 'en');
-
-        // Set initial theme
-        if (localStorage.getItem('theme') === 'dark' ||
-            (window.matchMedia('(prefers-color-scheme: dark)').matches && !localStorage.getItem('theme'))) {
+        if (localStorage.getItem('theme') === 'dark' || (window.matchMedia('(prefers-color-scheme: dark)').matches && !localStorage.getItem('theme'))) {
             body.classList.add('dark-mode');
             if (themeSwitch) themeSwitch.checked = true;
         }
 
-        // Set event listeners
+        // CRITICAL FIX: Set up event listeners for all interactive elements.
         setupEventListeners();
 
-        // Set initial placeholder text
-        updatePlaceholders();
+        // Initialize Font Manager: fetch list & setup data first, then load fonts in background
+        if (window.fontManager && typeof window.fontManager.initialize === 'function') {
+            console.log('Initializing FontManager...');
+            try {
+                await window.fontManager.initialize();
+                console.log('FontManager initialized successfully. Initializing font picker.');
+                initializeFontPicker();
+            } catch (error) {
+                console.error('Error initializing FontManager:', error);
+                // Fallback to initialize picker even if font loading fails
+                initializeFontPicker();
+            }
+        } else {
+            console.error('FontManager or its initialize method is missing.');
+        }
     }
 
+    // Run initialization
+    init();
+
     function initializeFontPicker() {
+        console.log("=== INITIALIZING FONT PICKER ===");
+        
+        // Check if source font element exists
+        if (!sourceFont) {
+            console.error('Source font element not found');
+            return;
+        }
+        
+        // Destroy existing instance
         if (sourceFontChoices) {
-            sourceFontChoices.destroy();
+            try {
+                sourceFontChoices.destroy();
+                console.log("Destroyed existing Choices.js instance.");
+            } catch (e) {
+                console.error("Error destroying Choices.js instance:", e);
+            }
         }
 
         const lang = sourceLanguage.value;
+        console.log(`Current language: ${lang}`);
+        
+        // Check if FontManager exists and has the required method
+        if (!window.fontManager || typeof window.fontManager.getFontsForLanguage !== 'function') {
+            console.error('FontManager not properly initialized');
+            return;
+        }
+        
         const fonts = window.fontManager.getFontsForLanguage(lang);
-        const choicesArray = fonts.map(f => ({
-            value: f.name,
-            label: f.name,
-            customProperties: { style: `font-family: '${f.name}', sans-serif;` }
-        }));
+        if (!fonts || fonts.length === 0) {
+            console.error(`No fonts found for language: ${lang}. Cannot initialize font picker.`);
+            return;
+        }
+        console.log(`Found ${fonts.length} fonts for ${lang}:`, fonts.map(f => f.name));
 
-        sourceFontChoices = new Choices(sourceFont, {
-            searchEnabled: true,
-            shouldSort: false,
-            itemSelectText: '',
-            placeholderValue: 'Select a font',
-            choices: choicesArray,
-            allowHTML: true, // Allow HTML in choices
-            callbackOnCreateTemplates: function(template) {
-                return {
-                    item: (classNames, data) => {
-                        return template(
-                            `<div class="${classNames.item} ${classNames.itemSelectable}" data-item data-id="${data.id}" data-value="${data.value}" style="${data.customProperties.style}">${data.label}</div>`
-                        );
-                    },
-                    choice: (classNames, data) => {
-                        return template(
-                            `<div class="${classNames.item} ${classNames.itemChoice}" data-choice data-id="${data.id}" data-value="${data.value}" style="${data.customProperties.style}">${data.label}</div>`
-                        );
-                    },
-                };
+        // SIMPLE APPROACH: Use basic HTML select first
+        console.log("Using basic HTML select dropdown...");
+        sourceFont.innerHTML = ''; // Clear existing options
+        
+        // Add default option
+        const defaultOption = document.createElement('option');
+        defaultOption.value = '';
+        defaultOption.textContent = 'Select a font...';
+        sourceFont.appendChild(defaultOption);
+        
+        fonts.forEach(font => {
+            const option = document.createElement('option');
+            option.value = font.name;
+            option.textContent = font.name;
+            option.style.fontFamily = `'${font.name}', sans-serif`;
+            sourceFont.appendChild(option);
+        });
+        
+        // Set up event listener
+        sourceFont.addEventListener('change', function() {
+            console.log(`Font selected: ${this.value}`);
+            if (this.value) {
+                previewFont(this.value, sourceText);
+                updatePlaceholders();
             }
         });
-
+        
+        // Set initial font
         if (fonts.length > 0) {
-            sourceFontChoices.setChoiceByValue(fonts[0].name);
+            sourceFont.value = fonts[0].name;
             previewFont(fonts[0].name, sourceText);
         }
+        
+        console.log(`Font picker initialized with ${fonts.length} fonts`);
     }
 
     function setupEventListeners() {
-        // Theme toggle
         if (themeSwitch) {
             themeSwitch.addEventListener('change', function() {
                 body.classList.toggle('dark-mode');
@@ -116,75 +175,43 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
         
-        // Language toggle
         if (enBtn) enBtn.addEventListener('click', () => setLanguage('en'));
         if (heBtn) heBtn.addEventListener('click', () => setLanguage('he'));
         
-        // Source language change
         if (sourceLanguage) {
+            console.log('Setting up source language event listener');
             sourceLanguage.addEventListener('change', function() {
-                if (targetLanguage) {
-                    targetLanguage.value = this.value === 'en' ? 'he' : 'en';
-                }
-                // Debounced update to prevent rapid firing
-                debounce(updateFontOptions, 200)();
+                console.log(`Language changed from ${targetLanguage.value} to ${this.value}`);
+                targetLanguage.value = this.value === 'en' ? 'he' : 'en';
+                updateFontOptions();
                 updatePlaceholders();
             });
         }
         
-        // Swap languages
         if (swapButton) {
             swapButton.addEventListener('click', swapLanguages);
         }
         
-        // Match button
         if (matchButton) {
             matchButton.addEventListener('click', findMatchingFont);
         }
         
-        // About modal
         if (aboutButton && aboutModal) {
-            aboutButton.addEventListener('click', () => {
-                aboutModal.classList.add('active');
-            });
+            aboutButton.addEventListener('click', () => aboutModal.classList.add('active'));
         }
         
-        // Close modals
         closeModalButtons.forEach(button => {
             button.addEventListener('click', () => {
-                document.querySelectorAll('.modal').forEach(modal => {
-                    modal.classList.remove('active');
-                });
+                document.querySelectorAll('.modal.active').forEach(modal => modal.classList.remove('active'));
             });
         });
         
-        // Close modal when clicking outside
         window.addEventListener('click', (e) => {
-            document.querySelectorAll('.modal').forEach(modal => {
-                if (e.target === modal) {
-                    modal.classList.remove('active');
-                }
+            document.querySelectorAll('.modal.active').forEach(modal => {
+                if (e.target === modal) modal.classList.remove('active');
             });
         });
         
-        // Font selection preview
-        if (sourceFont) {
-            sourceFont.addEventListener('change', function() {
-                if (sourceFontChoices) {
-                    const selectedValue = sourceFontChoices.getValue(true);
-                    previewFont(selectedValue, sourceText);
-                    updatePlaceholders();
-                }
-            });
-        }
-
-        // Listen for when fonts are loaded dynamically
-        document.addEventListener('fonts-loaded', () => {
-            console.log('Fonts loaded event received, initializing font picker.');
-            initializeFontPicker();
-        });
-
-        // Target font selection preview
         if (targetFontSelect) {
             targetFontSelect.addEventListener('change', function() {
                 previewFont(this.value, targetText);
@@ -195,7 +222,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function setLanguage(lang) {
-        // Update active language class
         body.classList.remove('active-lang-en', 'active-lang-he', 'rtl');
         body.classList.add(`active-lang-${lang}`);
         
@@ -208,22 +234,20 @@ document.addEventListener('DOMContentLoaded', function() {
             heBtn.classList.remove('active');
         }
         
-        // Store preference
         localStorage.setItem('language', lang);
         
-        // Update language in selectors if needed
         if (sourceLanguage.value !== lang) {
             sourceLanguage.value = lang;
             targetLanguage.value = lang === 'en' ? 'he' : 'en';
-            updateFontOptions();
+            if (sourceFontChoices) {
+                 updateFontOptions();
+            }
         }
         
-        // Update UI text based on language
         updateUIText(lang);
     }
     
     function updateUIText(lang) {
-        // Update all data-i18n elements with their translations
         document.querySelectorAll('[data-i18n]').forEach(el => {
             const key = el.getAttribute('data-i18n');
             if (translationService && translationService.getUIString) {
@@ -231,7 +255,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        // Update placeholders
         if (translationService && translationService.getUIString) {
             sourceText.placeholder = translationService.getUIString('enter_text', lang);
         } else {
@@ -240,27 +263,44 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function updateFontOptions() {
-        console.log('Updating font options for language:', sourceLanguage.value);
-        if (sourceFontChoices) {
-            const lang = sourceLanguage.value;
-            const fonts = fontManager.getFontsForLanguage(lang);
-            const choicesArray = fonts.map(font => ({
-                value: font.name,
-                label: font.name,
-                customProperties: { style: `font-family: '${font.name}', sans-serif;` }
-            }));
+        if (!sourceFontChoices) {
+            console.error('updateFontOptions called before Choices.js was initialized.');
+            return;
+        }
 
+        if (!fontManager || typeof fontManager.getFontsForLanguage !== 'function') {
+            console.error('FontManager not available in updateFontOptions');
+            return;
+        }
+
+        const lang = sourceLanguage.value;
+        console.log(`Updating font options for language: ${lang}`);
+        
+        const fonts = fontManager.getFontsForLanguage(lang);
+        if (!fonts || fonts.length === 0) {
+            console.error(`No fonts available for language: ${lang}`);
+            return;
+        }
+        
+        const choicesArray = fonts.map(font => ({
+            value: font.name,
+            label: font.name,
+            customProperties: { fontFamily: `'${font.name}', sans-serif` }
+        }));
+
+        try {
             sourceFontChoices.setChoices(choicesArray, 'value', 'label', true);
 
             if (fonts.length > 0) {
                 sourceFontChoices.setChoiceByValue(fonts[0].name);
                 previewFont(fonts[0].name, sourceText);
             }
-        } else {
-            console.log('Choices.js not initialized, initializing now.');
-            initializeFontPicker();
+            
+            updatePlaceholders();
+            console.log(`Font options updated successfully. ${fonts.length} fonts available.`);
+        } catch (error) {
+            console.error('Error updating font options:', error);
         }
-        updatePlaceholders();
     }
 
     function swapLanguages() {
@@ -268,7 +308,6 @@ document.addEventListener('DOMContentLoaded', function() {
         sourceLanguage.value = targetLanguage.value;
         targetLanguage.value = tempLang;
         
-        // Swap text content
         const tempText = sourceText.value;
         sourceText.value = targetText.value;
         targetText.value = tempText;
@@ -287,15 +326,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const sourceLang = sourceLanguage.value;
         const targetLang = targetLanguage.value;
         
-        // Set English placeholder or Hebrew placeholder in actual Hebrew text
-        sourceText.placeholder = sourceLang === 'en' ?
-            'Enter text in English' :
-            'הזן טקסט בעברית';
-        targetText.placeholder = targetLang === 'en' ?
-            'Enter text in English' :
-            'הזן טקסט בעברית';
+        sourceText.placeholder = sourceLang === 'en' ? 'Enter text in English' : 'הזן טקסט בעברית';
+        targetText.placeholder = targetLang === 'en' ? 'Enter text in English' : 'הזן טקסט בעברית';
 
-        // Apply selected fonts to inputs (placeholder and input text)
         if (sourceFontChoices) {
             const selectedValue = sourceFontChoices.getValue(true);
             if (selectedValue) {
@@ -324,32 +357,22 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        console.log('Finding match for:', selectedFont, 'from', sourceLang, 'to', targetLang);
-        
-        // Show loading
         if (loadingOverlay) {
             loadingOverlay.classList.add('active');
         }
         
-        // Simulate AI processing time
         setTimeout(() => {
             try {
-                // Find matching font using our "AI"
                 const matchedFont = fontManager.findMatchingFont(selectedFont, targetLang);
                 
-                console.log('Matched font:', matchedFont);
-                
-                // Update display
                 if (fontName) {
                     fontName.textContent = matchedFont || 'No match found';
                 }
                 
-                // Apply matched font to target text input
                 if (targetText && matchedFont) {
                     targetText.style.fontFamily = matchedFont;
                 }
                 
-                // Display visual comparison
                 if (matchedFont) {
                     displayFontComparison(
                         selectedFont, 
@@ -360,7 +383,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         targetLang
                     );
                     
-                    // Save match if user is logged in
                     if (window.authManager && window.authManager.isAuthenticated()) {
                         const matchData = {
                             sourceLanguage: sourceLang,
@@ -371,42 +393,27 @@ document.addEventListener('DOMContentLoaded', function() {
                             targetText: targetInputText,
                             matchScore: calculateMatchScore(selectedFont, matchedFont)
                         };
-                        
                         saveFontMatch(matchData);
                     }
                 } else {
                     alert('No matching font found for the selected criteria');
                 }
                 
-                // Apply source font to input
-                if (sourceText) {
-                    sourceText.style.fontFamily = selectedFont;
-                }
-                // Ensure target text uses matched font
-                if (targetText && matchedFont) {
-                    targetText.style.fontFamily = matchedFont;
-                }
-                
             } catch (error) {
                 console.error('Error in font matching:', error);
                 alert('An error occurred while matching fonts. Please try again.');
             } finally {
-                // Hide loading
                 if (loadingOverlay) {
                     loadingOverlay.classList.remove('active');
                 }
             }
-        }, 1500);
+        }, 500);
     }
     
     function displayFontComparison(sourceFont, targetFont, sourceText, targetText, sourceLang, targetLang) {
-        // Create comparison display
         fontComparisonDisplay.innerHTML = '';
-        
-        // Calculate match percentage (simplified for demo)
         const matchScore = calculateMatchScore(sourceFont, targetFont);
         
-        // Build comparison HTML
         const comparisonHTML = `
             <h2 class="comparison-title">
                 <span class="en">Font Comparison</span>
@@ -450,11 +457,9 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         `;
         
-        // Add to container and show
         fontComparisonDisplay.innerHTML = comparisonHTML;
         fontComparisonDisplay.classList.add('active');
         
-        // Add event listener for favorite button
         const saveFavoriteBtn = document.getElementById('save-favorite-btn');
         if (saveFavoriteBtn && !saveFavoriteBtn.disabled) {
             saveFavoriteBtn.addEventListener('click', () => {
@@ -472,50 +477,37 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
         
-        // Scroll to comparison
         fontComparisonDisplay.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
     
     function calculateMatchScore(font1, font2) {
-        // Simplified match score calculation
         if (fontManager && fontManager.fontVectors) {
             const vec1 = fontManager.fontVectors[font1];
             const vec2 = fontManager.fontVectors[font2];
             
             if (vec1 && vec2 && fontManager.calculateSimilarity) {
-                // Calculate similarity and convert to percentage
                 const similarity = fontManager.calculateSimilarity(vec1, vec2);
                 return Math.round(similarity * 100);
             }
         }
         
-        // Fallback calculation based on font characteristics
         const fonts = [...(fontManager.englishFonts || []), ...(fontManager.hebrewFonts || [])];
         const fontInfo1 = fonts.find(f => f.name === font1);
         const fontInfo2 = fonts.find(f => f.name === font2);
         
         if (fontInfo1 && fontInfo2) {
-            let score = 50; // Base score
-            
-            // Same category bonus
+            let score = 50;
             if (fontInfo1.category === fontInfo2.category) score += 20;
-            
-            // Same style bonus
             if (fontInfo1.style === fontInfo2.style) score += 15;
-            
-            // Weight similarity bonus
             if (fontInfo1.weight === fontInfo2.weight) score += 10;
-            
             return Math.min(score + Math.floor(Math.random() * 10), 98);
         }
         
-        return 85; // Default fallback
+        return 85;
     }
 
-    // Function to save font match to database
     async function saveFontMatch(matchData, markAsFavorite = false) {
         if (!window.authManager || !window.authManager.isAuthenticated()) {
-            console.log('User not authenticated, cannot save font match');
             return;
         }
 
@@ -527,10 +519,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({
-                    ...matchData,
-                    isFavorite: markAsFavorite
-                })
+                body: JSON.stringify({ ...matchData, isFavorite: markAsFavorite })
             });
 
             if (!response.ok) {
@@ -541,7 +530,6 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('Font match saved successfully:', result);
             
             if (markAsFavorite) {
-                // Update button to show it's been saved
                 const saveFavoriteBtn = document.getElementById('save-favorite-btn');
                 if (saveFavoriteBtn) {
                     saveFavoriteBtn.innerHTML = `
@@ -562,26 +550,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Helper function to get default text
     function getDefaultText(lang) {
-        if (lang === 'he') {
-            return 'טקסט לדוגמה בעברית';
-        } else {
-            return 'Sample text in English';
-        }
+        return lang === 'he' ? 'טקסט לדוגמה בעברית' : 'Sample text in English';
     }
-    
-    // Helper function to check if element exists
-    function getElement(id) {
-        const element = document.getElementById(id);
-        if (!element) {
-            console.warn(`Element with id '${id}' not found`);
-        }
-        return element;
-    }
-
-    // Refresh font options once Google Fonts are loaded dynamically
-    document.addEventListener('fonts-loaded', () => {
-        updateFontOptions();
-    });
 });
