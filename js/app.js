@@ -355,35 +355,43 @@ document.addEventListener('DOMContentLoaded', async function() {
         
         setTimeout(() => {
             try {
-                const matchedFont = fontManager.findMatchingFont(selectedFont, targetLang);
+                // Get multiple font alternatives instead of just one match
+                const alternatives = fontManager.findMatchingFontAlternatives(selectedFont, targetLang, 3);
                 
-                if (fontName) {
-                    fontName.textContent = matchedFont || 'No match found';
-                }
-                
-                if (targetText && matchedFont) {
-                    targetText.style.fontFamily = matchedFont;
-                }
-                
-                if (matchedFont) {
+                if (alternatives && alternatives.length > 0) {
+                    const bestMatch = alternatives[0];
+                    
+                    // Update the main display with the best match
+                    if (fontName) {
+                        fontName.textContent = bestMatch.name;
+                    }
+                    
+                    if (targetText) {
+                        targetText.style.fontFamily = bestMatch.name;
+                    }
+                    
+                    // Display font comparison with alternatives
                     displayFontComparison(
                         selectedFont, 
-                        matchedFont, 
+                        bestMatch.name, 
                         getRichTextContent('source-text') || inputText, 
                         getRichTextContent('target-text') || targetInputText,
                         sourceLang,
                         targetLang
                     );
                     
+                    // Display alternatives section
+                    displayFontAlternatives(alternatives, targetInputText, targetLang);
+                    
                     if (window.authManager && window.authManager.isAuthenticated()) {
                         const matchData = {
                             sourceLanguage: sourceLang,
                             targetLanguage: targetLang,
                             sourceFont: selectedFont,
-                            targetFont: matchedFont,
+                            targetFont: bestMatch.name,
                             sourceText: inputText,
                             targetText: targetInputText,
-                            matchScore: calculateMatchScore(selectedFont, matchedFont)
+                            matchScore: bestMatch.confidence
                         };
                         saveFontMatch(matchData);
                     }
@@ -551,6 +559,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         const formatButtons = document.querySelectorAll('.format-btn');
         const richTextEditors = document.querySelectorAll('.rich-text-editor');
         
+        // Store the last active editor
+        let lastActiveEditor = null;
+        
         // Add event listeners to formatting buttons
         formatButtons.forEach(button => {
             button.addEventListener('mousedown', function(e) {
@@ -565,40 +576,72 @@ document.addEventListener('DOMContentLoaded', async function() {
             });
         });
         
-        // Add keyboard shortcuts
+        // Add keyboard shortcuts and event handlers
         richTextEditors.forEach(editor => {
+            // Track the active editor
+            editor.addEventListener('focus', function() {
+                lastActiveEditor = this;
+                updateToolbarState(this);
+            });
+            
             editor.addEventListener('keydown', function(e) {
                 if (e.ctrlKey || e.metaKey) {
                     switch(e.key.toLowerCase()) {
                         case 'b':
                             e.preventDefault();
-                            executeFormatCommand('bold');
+                            executeFormatCommand('bold', null, this);
                             break;
                         case 'i':
                             e.preventDefault();
-                            executeFormatCommand('italic');
+                            executeFormatCommand('italic', null, this);
                             break;
                         case 'u':
                             e.preventDefault();
-                            executeFormatCommand('underline');
+                            executeFormatCommand('underline', null, this);
+                            break;
+                        case 'z':
+                            if (e.shiftKey) {
+                                e.preventDefault();
+                                document.execCommand('redo', false, null);
+                            } else {
+                                // Let default undo work
+                            }
                             break;
                     }
                 }
             });
             
             // Update toolbar state when selection changes
-            editor.addEventListener('input', updateToolbarState);
-            editor.addEventListener('keyup', updateToolbarState);
-            editor.addEventListener('mouseup', updateToolbarState);
-            editor.addEventListener('focus', updateToolbarState);
+            editor.addEventListener('input', () => updateToolbarState(editor));
+            editor.addEventListener('keyup', () => updateToolbarState(editor));
+            editor.addEventListener('mouseup', () => updateToolbarState(editor));
+            editor.addEventListener('selectionchange', () => updateToolbarState(editor));
+            
+            // Handle paste events to maintain formatting
+            editor.addEventListener('paste', function(e) {
+                e.preventDefault();
+                const text = (e.originalEvent || e).clipboardData.getData('text/plain');
+                document.execCommand('insertText', false, text);
+            });
         });
+        
+        // Global selection change listener
+        document.addEventListener('selectionchange', function() {
+            const activeElement = document.activeElement;
+            if (activeElement && activeElement.classList.contains('rich-text-editor')) {
+                updateToolbarState(activeElement);
+            }
+        });
+        
+        // Store last active editor reference
+        window.getLastActiveEditor = () => lastActiveEditor;
     }
     
-    function executeFormatCommand(command, button = null) {
-        // Find the closest rich text editor to the button that was clicked
-        let activeEditor = null;
+    function executeFormatCommand(command, button = null, targetEditor = null) {
+        // Find the active editor
+        let activeEditor = targetEditor;
         
-        if (button) {
+        if (!activeEditor && button) {
             // Find the editor in the same container as the button
             const toolbar = button.closest('.formatting-toolbar');
             if (toolbar) {
@@ -617,16 +660,20 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
         }
         
-        // Fallback: find any editor that has content or was recently focused
+        // Fallback: use last active editor
+        if (!activeEditor && window.getLastActiveEditor) {
+            activeEditor = window.getLastActiveEditor();
+        }
+        
+        // Final fallback: find any editor with content or use first
         if (!activeEditor) {
             const editors = document.querySelectorAll('.rich-text-editor');
             for (let editor of editors) {
-                if (editor.textContent.trim() || editor === document.querySelector('.rich-text-editor:focus')) {
+                if (editor.textContent.trim()) {
                     activeEditor = editor;
                     break;
                 }
             }
-            // If still no editor found, use the first one
             if (!activeEditor && editors.length > 0) {
                 activeEditor = editors[0];
             }
@@ -637,50 +684,172 @@ document.addEventListener('DOMContentLoaded', async function() {
             return;
         }
         
-        // Focus the editor
+        // Ensure editor is focused
         activeEditor.focus();
         
-        // Check if there's any selected text
+        // Store current selection
         const selection = window.getSelection();
-        const selectedText = selection.toString();
         
-        // If no text is selected and the editor has content, select all content
-        if (!selectedText && activeEditor.textContent.trim()) {
-            const range = document.createRange();
-            range.selectNodeContents(activeEditor);
-            selection.removeAllRanges();
-            selection.addRange(range);
+        // Handle special case for removeFormat
+        if (command === 'removeFormat') {
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                if (!range.collapsed) {
+                    // Text is selected, remove formatting from selection
+                    document.execCommand('removeFormat', false, null);
+                } else {
+                    // No selection, remove all formatting from editor
+                    const content = activeEditor.textContent || activeEditor.innerText;
+                    activeEditor.innerHTML = '';
+                    activeEditor.textContent = content;
+                }
+            }
+        } else {
+            // For bold, italic, underline
+            const selectedText = selection.toString();
+            
+            if (!selectedText && activeEditor.textContent.trim()) {
+                // No text selected but editor has content - ask user if they want to format all
+                const shouldFormatAll = confirm(`No text selected. Apply ${command} to all text?`);
+                if (shouldFormatAll) {
+                    const range = document.createRange();
+                    range.selectNodeContents(activeEditor);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                }
+            }
+            
+            // Execute the formatting command
+            const success = document.execCommand(command, false, null);
+            
+            if (!success) {
+                // Fallback: manual formatting
+                applyManualFormatting(activeEditor, command, selection);
+            }
         }
         
-        // Execute the formatting command
-        document.execCommand(command, false, null);
-        updateToolbarState();
+        // Update toolbar state and maintain focus
+        setTimeout(() => {
+            updateToolbarState(activeEditor);
+            activeEditor.focus();
+        }, 10);
         
-        // Keep focus in editor
-        activeEditor.focus();
-        
-        // Move cursor to the end after formatting (except for removeFormat)
-        if (command !== 'removeFormat') {
-            setTimeout(() => {
-                const range = document.createRange();
-                range.selectNodeContents(activeEditor);
-                range.collapse(false); // Move to end
-                selection.removeAllRanges();
-                selection.addRange(range);
-            }, 10);
-        }
+        // Trigger input event for any listeners
+        activeEditor.dispatchEvent(new Event('input', { bubbles: true }));
     }
     
-    function updateToolbarState() {
-        const formatButtons = document.querySelectorAll('.format-btn');
+    function applyManualFormatting(editor, command, selection) {
+        if (selection.rangeCount === 0) return;
         
-        formatButtons.forEach(button => {
-            const command = button.getAttribute('data-command');
-            if (command !== 'removeFormat') {
-                const isActive = document.queryCommandState(command);
-                button.classList.toggle('active', isActive);
+        const range = selection.getRangeAt(0);
+        const selectedText = range.toString();
+        
+        if (!selectedText) return;
+        
+        const span = document.createElement('span');
+        
+        switch (command) {
+            case 'bold':
+                span.style.fontWeight = 'bold';
+                break;
+            case 'italic':
+                span.style.fontStyle = 'italic';
+                break;
+            case 'underline':
+                span.style.textDecoration = 'underline';
+                break;
+        }
+        
+        try {
+            range.surroundContents(span);
+        } catch (e) {
+            // If surroundContents fails, extract and wrap content
+            const contents = range.extractContents();
+            span.appendChild(contents);
+            range.insertNode(span);
+        }
+        
+        // Clear selection
+        selection.removeAllRanges();
+    }
+    
+    function updateToolbarState(targetEditor = null) {
+        // Find which toolbar to update
+        let toolbars = [];
+        
+        if (targetEditor) {
+            // Find the specific toolbar for this editor
+            const textEditor = targetEditor.closest('.text-editor');
+            if (textEditor) {
+                const toolbar = textEditor.querySelector('.formatting-toolbar');
+                if (toolbar) {
+                    toolbars = [toolbar];
+                }
             }
+        }
+        
+        // Fallback: update all toolbars
+        if (toolbars.length === 0) {
+            toolbars = document.querySelectorAll('.formatting-toolbar');
+        }
+        
+        toolbars.forEach(toolbar => {
+            const formatButtons = toolbar.querySelectorAll('.format-btn');
+            
+            formatButtons.forEach(button => {
+                const command = button.getAttribute('data-command');
+                
+                if (command !== 'removeFormat') {
+                    let isActive = false;
+                    
+                    try {
+                        // Check if the command is currently active
+                        isActive = document.queryCommandState(command);
+                        
+                        // Additional check for manual formatting
+                        if (!isActive && targetEditor) {
+                            const selection = window.getSelection();
+                            if (selection.rangeCount > 0) {
+                                const range = selection.getRangeAt(0);
+                                const container = range.commonAncestorContainer;
+                                const element = container.nodeType === Node.TEXT_NODE ? container.parentElement : container;
+                                
+                                // Check for inline styles or semantic elements
+                                isActive = checkManualFormatting(element, command);
+                            }
+                        }
+                    } catch (e) {
+                        // queryCommandState might fail in some browsers
+                        console.warn('queryCommandState failed for command:', command, e);
+                    }
+                    
+                    button.classList.toggle('active', isActive);
+                    button.setAttribute('aria-pressed', isActive);
+                }
+            });
         });
+    }
+    
+    function checkManualFormatting(element, command) {
+        if (!element || element === document.body) return false;
+        
+        const computedStyle = window.getComputedStyle(element);
+        
+        switch (command) {
+            case 'bold':
+                return computedStyle.fontWeight === 'bold' || 
+                       computedStyle.fontWeight === '700' || 
+                       parseInt(computedStyle.fontWeight) >= 700 ||
+                       element.tagName === 'B' || element.tagName === 'STRONG';
+            case 'italic':
+                return computedStyle.fontStyle === 'italic' ||
+                       element.tagName === 'I' || element.tagName === 'EM';
+            case 'underline':
+                return computedStyle.textDecoration.includes('underline') ||
+                       element.tagName === 'U';
+            default:
+                return false;
+        }
     }
     
     // Get text content from rich text editor (preserving formatting)
@@ -710,4 +879,117 @@ document.addEventListener('DOMContentLoaded', async function() {
             editor.textContent = content;
         }
     }
+
+    // Add visual feedback for formatting actions
+    function showFormatFeedback(button, command) {
+        if (button) {
+            button.classList.add('applying');
+            setTimeout(() => {
+                button.classList.remove('applying');
+            }, 200);
+        }
+        
+        // Show temporary toast for keyboard shortcuts
+        if (!button) {
+            showTemporaryToast(`Applied ${command} formatting`);
+        }
+    }
+    
+    function showTemporaryToast(message) {
+        // Remove existing toast
+        const existingToast = document.querySelector('.format-toast');
+        if (existingToast) {
+            existingToast.remove();
+        }
+        
+        // Create new toast
+        const toast = document.createElement('div');
+        toast.className = 'format-toast';
+        toast.textContent = message;
+        toast.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--primary-color);
+            color: white;
+            padding: 8px 16px;
+            border-radius: var(--radius);
+            font-size: 14px;
+            z-index: 1000;
+            animation: slideInRight 0.3s ease-out forwards;
+            box-shadow: var(--shadow);
+        `;
+        
+        document.body.appendChild(toast);
+        
+        // Remove after 2 seconds
+        setTimeout(() => {
+            toast.style.animation = 'slideOutRight 0.3s ease-out forwards';
+            setTimeout(() => toast.remove(), 300);
+        }, 2000);
+    }
+    
+    // Add CSS for toast animations
+    function addToastStyles() {
+        if (!document.querySelector('#toast-styles')) {
+            const style = document.createElement('style');
+            style.id = 'toast-styles';
+            style.textContent = `
+                @keyframes slideInRight {
+                    from { transform: translateX(100%); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+                @keyframes slideOutRight {
+                    from { transform: translateX(0); opacity: 1; }
+                    to { transform: translateX(100%); opacity: 0; }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+    }
+    
+    // Enhanced format command execution with better error handling
+    function executeFormatCommandEnhanced(command, button = null, targetEditor = null) {
+        // ...existing executeFormatCommand code...
+        executeFormatCommand(command, button, targetEditor);
+        
+        // Add visual feedback
+        showFormatFeedback(button, command);
+    }
+    
+    // Improve keyboard shortcuts with better handling
+    function setupAdvancedKeyboardShortcuts() {
+        document.addEventListener('keydown', function(e) {
+            // Only process if we're in a rich text editor
+            const activeElement = document.activeElement;
+            if (!activeElement || !activeElement.classList.contains('rich-text-editor')) {
+                return;
+            }
+            
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key.toLowerCase()) {
+                    case 'b':
+                        e.preventDefault();
+                        executeFormatCommandEnhanced('bold', null, activeElement);
+                        break;
+                    case 'i':
+                        e.preventDefault();
+                        executeFormatCommandEnhanced('italic', null, activeElement);
+                        break;
+                    case 'u':
+                        e.preventDefault();
+                        executeFormatCommandEnhanced('underline', null, activeElement);
+                        break;
+                    case '\\':
+                        e.preventDefault();
+                        executeFormatCommandEnhanced('removeFormat', null, activeElement);
+                        break;
+                }
+            }
+        });
+    }
+    
+    // Initialize enhanced formatting
+    addToastStyles();
+    setupAdvancedKeyboardShortcuts();
 });

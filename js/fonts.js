@@ -304,6 +304,61 @@ class FontManager {
         return bestMatch;
     }
 
+    // New method to find multiple font alternatives with scores
+    findMatchingFontAlternatives(sourceFont, targetLang, maxResults = 3) {
+        const targetFonts = this.getFontsForLanguage(targetLang);
+        if (!targetFonts || targetFonts.length === 0) {
+            console.error(`No fonts available for target language: ${targetLang}`);
+            return [];
+        }
+
+        const sourceVector = this.getFontVector(sourceFont);
+        if (!sourceVector) {
+            console.error(`Source font vector not found: ${sourceFont}`);
+            return [];
+        }
+
+        // Calculate scores for all target fonts
+        const alternatives = targetFonts.map(targetFont => {
+            const targetVector = this.getFontVector(targetFont.name);
+            if (!targetVector) return null;
+
+            // Calculate similarity score
+            const similarity = this.calculateSimilarity(sourceVector, targetVector);
+            
+            // Check for curated pairing bonus
+            const curatedPair = this.fontPairings[sourceFont] === targetFont.name;
+            const curatedBonus = curatedPair ? 0.15 : 0;
+            
+            // Calculate final score (0-1 range)
+            const finalScore = Math.min(1, similarity + curatedBonus);
+            
+            return {
+                name: targetFont.name,
+                category: targetFont.category,
+                style: targetFont.style,
+                weight: targetFont.weight,
+                score: finalScore,
+                confidence: Math.round(finalScore * 100),
+                isCuratedPair: curatedPair,
+                metadata: {
+                    similarity: similarity,
+                    curatedBonus: curatedBonus
+                }
+            };
+        }).filter(Boolean); // Remove null entries
+
+        // Sort by score (highest first) and return top results
+        alternatives.sort((a, b) => b.score - a.score);
+        
+        // Mark the best match
+        if (alternatives.length > 0) {
+            alternatives[0].isBestMatch = true;
+        }
+
+        return alternatives.slice(0, maxResults);
+    }
+
     // Calculate match confidence percentage based on normalized fraction in cache
     getMatchPercentage(sourceFont, targetLang) {
         const cacheKey = `${sourceFont}-${targetLang}`;

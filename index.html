@@ -8,6 +8,7 @@
     <title>Font Match | Match fonts between languages</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css"/>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/formatting-enhancements.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Dynamically load all free Google Fonts via WebFontLoader -->
     <script src="https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js"></script>
@@ -129,22 +130,22 @@
                         </select>
                     </div>
                     <div class="text-editor">
-                        <div class="formatting-toolbar">
-                            <button type="button" class="format-btn" data-command="bold" title="Bold (Ctrl+B)">
-                                <i class="fas fa-bold"></i>
+                        <div class="formatting-toolbar" role="toolbar" aria-label="Text formatting">
+                            <button type="button" class="format-btn" data-command="bold" title="Bold (Ctrl+B)" aria-label="Bold" aria-pressed="false">
+                                <i class="fas fa-bold" aria-hidden="true"></i>
                             </button>
-                            <button type="button" class="format-btn" data-command="italic" title="Italic (Ctrl+I)">
-                                <i class="fas fa-italic"></i>
+                            <button type="button" class="format-btn" data-command="italic" title="Italic (Ctrl+I)" aria-label="Italic" aria-pressed="false">
+                                <i class="fas fa-italic" aria-hidden="true"></i>
                             </button>
-                            <button type="button" class="format-btn" data-command="underline" title="Underline (Ctrl+U)">
-                                <i class="fas fa-underline"></i>
+                            <button type="button" class="format-btn" data-command="underline" title="Underline (Ctrl+U)" aria-label="Underline" aria-pressed="false">
+                                <i class="fas fa-underline" aria-hidden="true"></i>
                             </button>
-                            <div class="separator"></div>
-                            <button type="button" class="format-btn" data-command="removeFormat" title="Clear Formatting">
-                                <i class="fas fa-remove-format"></i>
+                            <div class="separator" role="separator"></div>
+                            <button type="button" class="format-btn" data-command="removeFormat" title="Clear Formatting (Ctrl+\)" aria-label="Remove formatting">
+                                <i class="fas fa-remove-format" aria-hidden="true"></i>
                             </button>
                         </div>
-                        <div id="source-text" class="rich-text-editor" contenteditable="true" data-placeholder="Enter text here"></div>
+                        <div id="source-text" class="rich-text-editor" contenteditable="true" data-placeholder="Enter text here" role="textbox" aria-label="Source text input"></div>
                     </div>
                 </div>
 
@@ -167,22 +168,22 @@
                         </div>
                     </div>
                     <div class="text-editor">
-                        <div class="formatting-toolbar">
-                            <button type="button" class="format-btn" data-command="bold" title="Bold (Ctrl+B)">
-                                <i class="fas fa-bold"></i>
+                        <div class="formatting-toolbar" role="toolbar" aria-label="Target text formatting">
+                            <button type="button" class="format-btn" data-command="bold" title="Bold (Ctrl+B)" aria-label="Bold" aria-pressed="false">
+                                <i class="fas fa-bold" aria-hidden="true"></i>
                             </button>
-                            <button type="button" class="format-btn" data-command="italic" title="Italic (Ctrl+I)">
-                                <i class="fas fa-italic"></i>
+                            <button type="button" class="format-btn" data-command="italic" title="Italic (Ctrl+I)" aria-label="Italic" aria-pressed="false">
+                                <i class="fas fa-italic" aria-hidden="true"></i>
                             </button>
-                            <button type="button" class="format-btn" data-command="underline" title="Underline (Ctrl+U)">
-                                <i class="fas fa-underline"></i>
+                            <button type="button" class="format-btn" data-command="underline" title="Underline (Ctrl+U)" aria-label="Underline" aria-pressed="false">
+                                <i class="fas fa-underline" aria-hidden="true"></i>
                             </button>
-                            <div class="separator"></div>
-                            <button type="button" class="format-btn" data-command="removeFormat" title="Clear Formatting">
-                                <i class="fas fa-remove-format"></i>
+                            <div class="separator" role="separator"></div>
+                            <button type="button" class="format-btn" data-command="removeFormat" title="Clear Formatting (Ctrl+\)" aria-label="Remove formatting">
+                                <i class="fas fa-remove-format" aria-hidden="true"></i>
                             </button>
                         </div>
-                        <div id="target-text" class="rich-text-editor" contenteditable="true" data-placeholder="Enter text in the other language"></div>
+                        <div id="target-text" class="rich-text-editor" contenteditable="true" data-placeholder="Enter text in the other language" role="textbox" aria-label="Target text input"></div>
                     </div>
                 </div>
             </div>
